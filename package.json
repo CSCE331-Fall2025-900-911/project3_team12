@@ -57,6 +57,9 @@
       },
       "scripts": {
           "dev": "vite",
-          "build": "node ./scripts/vite-build.js"
+          "build": "node ./scripts/vite-build.js",
+          "server": "ts-node server/index.ts",
+          "server:dev": "nodemon --watch server --exec ts-node server/index.ts",
+          "db:setup": "psql -h csce-315-db.engr.tamu.edu -U gang_12 -d gang_12_db -f server/schema.sql"
       }
   }
