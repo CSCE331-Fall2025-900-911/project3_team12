@@ -30,10 +30,6 @@ export function WelcomeScreen({ onStartOrder }: WelcomeScreenProps) {
             Start Your Order
           </Button>
         </div>
-
-        <p className="text-muted-foreground pt-4">
-          Tap anywhere to begin
-        </p>
       </div>
     </div>
   );
