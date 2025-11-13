@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ShoppingCart } from 'lucide-react';
 import { CustomizationDialog } from './CustomizationDialog';
+import { useMagnifier } from './MagnifierContext';
 
 interface MenuScreenProps {
   cart: CartItem[];
@@ -16,9 +17,12 @@ interface MenuScreenProps {
 export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
   const [selectedTea, setSelectedTea] = useState<BubbleTea | null>(null);
   const [showCustomization, setShowCustomization] = useState(false);
+  const { setEnabled } = useMagnifier();
 
   const handleSelectTea = (tea: BubbleTea) => {
     setSelectedTea(tea);
+    // disable magnifier while customization dialog is open
+    setEnabled(false);
     setShowCustomization(true);
   };
 
@@ -87,7 +91,11 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
         <CustomizationDialog
           tea={selectedTea}
           open={showCustomization}
-          onClose={() => setShowCustomization(false)}
+          onClose={() => {
+            setShowCustomization(false);
+            // re-enable magnifier when dialog closes
+            setEnabled(true);
+          }}
           onAddToCart={onAddToCart}
         />
       )}
