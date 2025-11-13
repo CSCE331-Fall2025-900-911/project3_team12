@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CartItem } from '../types/types';
 import { availableToppings, sizePricing } from '../data/menu';
+import { ordersApi } from '../services/api';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Separator } from './ui/separator';
@@ -32,6 +33,8 @@ export function CheckoutScreen({
   onCompleteOrder,
 }: CheckoutScreenProps) {
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const calculateItemTotal = (item: CartItem) => {
     let total = item.tea.basePrice;
@@ -55,12 +58,45 @@ export function CheckoutScreen({
     return calculateSubtotal() + calculateTax();
   };
 
-  const handleCompleteOrder = () => {
-    setShowConfirmation(true);
+  const handleCompleteOrder = async () => {
+    setIsSubmitting(true);
+    setOrderError(null);
+
+    try {
+      // Transform cart items to match API format
+      const orderItems = cart.map((item) => ({
+        menuItemId: item.tea.id,
+        itemName: item.tea.name,
+        quantity: item.quantity,
+        size: item.customization.size,
+        sugarLevel: item.customization.sugarLevel,
+        toppings: item.customization.toppings,
+        price: calculateItemTotal(item),
+      }));
+
+      // Create order in database
+      await ordersApi.create({
+        items: orderItems,
+        totalPrice: calculateTotal(),
+      });
+
+      // Show success confirmation
+      setShowConfirmation(true);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      setOrderError(
+        error instanceof Error 
+          ? error.message 
+          : 'Failed to create order. Please try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleConfirmOrder = () => {
     setShowConfirmation(false);
+    setOrderError(null);
     onCompleteOrder();
   };
 
@@ -190,11 +226,18 @@ export function CheckoutScreen({
                 </div>
               </div>
 
+              {orderError && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm text-center">{orderError}</p>
+                </div>
+              )}
+
               <Button
                 onClick={handleCompleteOrder}
+                disabled={isSubmitting}
                 className="w-full mt-6 bg-primary hover:bg-primary/90 text-lg py-6"
               >
-                Complete Order
+                {isSubmitting ? 'Processing...' : 'Complete Order'}
               </Button>
             </Card>
           </div>
