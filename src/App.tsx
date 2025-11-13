@@ -5,8 +5,9 @@ import { MenuScreen } from './components/MenuScreen';
 import { CheckoutScreen } from './components/CheckoutScreen';
 import Magnifier from './components/Magnifier';
 import { MagnifierProvider } from './components/MagnifierContext';
+import ManagerReports from './components/ManagerReports';
 
-type Screen = 'welcome' | 'menu' | 'checkout';
+type Screen = 'welcome' | 'menu' | 'checkout' | 'reports';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
@@ -72,6 +73,14 @@ export default function App() {
   return (
     <MagnifierProvider>
       <>
+        <div style={{ position: 'fixed', top: 12, right: 12, zIndex: 9999 }}>
+          <button
+            onClick={() => setCurrentScreen((s) => (s === 'reports' ? 'welcome' : 'reports'))}
+            style={{ padding: '6px 10px', borderRadius: 6 }}
+          >
+            Manager Reports
+          </button>
+        </div>
         <Magnifier />
       {currentScreen === 'welcome' && (
         <WelcomeScreen onStartOrder={handleStartOrder} />
@@ -92,6 +101,7 @@ export default function App() {
           onCompleteOrder={handleCompleteOrder}
         />
       )}
+      {currentScreen === 'reports' && <ManagerReports />}
       </>
     </MagnifierProvider>
   );

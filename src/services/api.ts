@@ -1,5 +1,8 @@
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+import { SalesSummary, ItemSales, DailySales, ManagerSalesReport } from '../types/types';
+
+// API base
 
 // Types
 export interface MenuItem {
@@ -141,6 +144,51 @@ export const ordersApi = {
     });
     return handleResponse<{ message: string }>(response);
   },
+};
+
+// Reports API (for manager)
+export const reportsApi = {
+  // Fetch summarized sales report for a date range or last N days
+  async sales(params?: { start?: string; end?: string; days?: number }): Promise<ManagerSalesReport> {
+    const qs = params
+      ? `?${new URLSearchParams(
+          Object.entries(params as Record<string, any>)
+            .filter(([, v]) => v !== undefined)
+            .map(([k, v]) => [k, String(v)])
+        )}`
+      : '';
+
+    const response = await fetch(`${API_BASE_URL}/reports/sales${qs}`);
+    return handleResponse<ManagerSalesReport>(response);
+  },
+
+  // Fetch daily sales series
+  async daily(params?: { start?: string; end?: string; days?: number }): Promise<{ range: { start: string; end: string }; daily: DailySales[] }> {
+    const qs = params
+      ? `?${new URLSearchParams(
+          Object.entries(params as Record<string, any>)
+            .filter(([, v]) => v !== undefined)
+            .map(([k, v]) => [k, String(v)])
+        )}`
+      : '';
+
+    const response = await fetch(`${API_BASE_URL}/reports/daily${qs}`);
+    return handleResponse(response);
+  },
+
+  // Fetch top items
+  async topItems(params?: { start?: string; end?: string; days?: number }): Promise<{ range: { start: string; end: string }; top: ItemSales[] }> {
+    const qs = params
+      ? `?${new URLSearchParams(
+          Object.entries(params as Record<string, any>)
+            .filter(([, v]) => v !== undefined)
+            .map(([k, v]) => [k, String(v)])
+        )}`
+      : '';
+
+    const response = await fetch(`${API_BASE_URL}/reports/top-items${qs}`);
+    return handleResponse(response);
+  }
 };
 
 // Health check

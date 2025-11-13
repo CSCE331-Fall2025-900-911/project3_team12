@@ -6,6 +6,7 @@ import pool, { query } from './db.js';
 // Import routes
 import menuRoutes from './routes/menu.js';
 import orderRoutes from './routes/orders.js';
+import reportsRoutes from './routes/reports.js';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 // Routes
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {
