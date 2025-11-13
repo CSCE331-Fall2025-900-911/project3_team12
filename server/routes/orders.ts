@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { query } from '../db';
+import { query } from '../db.js';
 
 const router = express.Router();
 
@@ -16,7 +16,7 @@ router.get('/', async (req: Request, res: Response) => {
           json_build_object(
             'id', oi.id,
             'menuItemId', oi.menu_item_id,
-            'menuItemName', mi.name,
+            'itemName', oi.item_name,
             'quantity', oi.quantity,
             'size', oi.size,
             'sugarLevel', oi.sugar_level,
@@ -26,7 +26,6 @@ router.get('/', async (req: Request, res: Response) => {
         ) as items
       FROM orders o
       LEFT JOIN order_items oi ON o.id = oi.order_id
-      LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
       GROUP BY o.id, o.total_price, o.status, o.created_at
       ORDER BY o.created_at DESC
     `);
@@ -51,7 +50,7 @@ router.get('/:id', async (req: Request, res: Response) => {
           json_build_object(
             'id', oi.id,
             'menuItemId', oi.menu_item_id,
-            'menuItemName', mi.name,
+            'itemName', oi.item_name,
             'quantity', oi.quantity,
             'size', oi.size,
             'sugarLevel', oi.sugar_level,
@@ -61,7 +60,6 @@ router.get('/:id', async (req: Request, res: Response) => {
         ) as items
       FROM orders o
       LEFT JOIN order_items oi ON o.id = oi.order_id
-      LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
       WHERE o.id = $1
       GROUP BY o.id, o.total_price, o.status, o.created_at
     `, [id]);
@@ -100,18 +98,20 @@ router.post('/', async (req: Request, res: Response) => {
       const itemResult = await query(
         `INSERT INTO order_items (
           order_id, 
-          menu_item_id, 
+          menu_item_id,
+          item_name,
           quantity, 
           size, 
           sugar_level, 
           toppings, 
           price
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, menu_item_id as "menuItemId", quantity, size, sugar_level as "sugarLevel", toppings, price`,
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, menu_item_id as "menuItemId", item_name as "itemName", quantity, size, sugar_level as "sugarLevel", toppings, price`,
         [
           orderId,
           item.menuItemId,
+          item.itemName,
           item.quantity,
           item.size,
           item.sugarLevel,

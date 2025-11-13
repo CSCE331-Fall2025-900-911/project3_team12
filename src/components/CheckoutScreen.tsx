@@ -66,6 +66,7 @@ export function CheckoutScreen({
       // Transform cart items to match API format
       const orderItems = cart.map((item) => ({
         menuItemId: item.tea.id,
+        itemName: item.tea.name,
         quantity: item.quantity,
         size: item.customization.size,
         sugarLevel: item.customization.sugarLevel,

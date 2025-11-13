@@ -40,6 +40,7 @@ CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
+    item_name VARCHAR(255) NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 1,
     size VARCHAR(20) NOT NULL,
     sugar_level VARCHAR(20) NOT NULL,

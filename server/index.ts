@@ -1,11 +1,11 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import pool, { query } from './db';
+import pool, { query } from './db.js';
 
 // Import routes
-import menuRoutes from './routes/menu';
-import orderRoutes from './routes/orders';
+import menuRoutes from './routes/menu.js';
+import orderRoutes from './routes/orders.js';
 
 dotenv.config();
 
