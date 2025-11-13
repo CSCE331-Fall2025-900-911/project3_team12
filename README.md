@@ -17,7 +17,7 @@ npm install
 ```bash
 npm run db:setup
 ```
-When prompted, enter password: `gYd28XpT`
+When prompted, enter password:
 
 3. **Start backend server (Terminal 1):**
 
@@ -68,7 +68,6 @@ npm run dev
 **Host:** `csce-315-db.engr.tamu.edu`  
 **Database:** `gang_12_db`  
 **User:** `gang_12`  
-**Password:** `gYd28XpT`
 
 Connect via command line:
 ```bash
