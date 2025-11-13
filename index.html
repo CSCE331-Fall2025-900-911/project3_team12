@@ -9,7 +9,80 @@
 
     <body>
       <div id="root"></div>
+      <div id="google_translate_element"></div>
       <script type="module" src="/src/main.tsx"></script>
+      <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+      <script type="text/javascript">
+        function googleTranslateElementInit() {
+          new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+        }
+
+        // Reposition the real Google Translate dropdown into our container and style it
+        function moveGoogleTranslateDropdown(retryDelay = 150) {
+        const container = document.getElementById('google_translate_element');
+        // The real dropdown has class 'goog-te-combo'
+        const combo = document.querySelector('.goog-te-combo');
+
+        if (!container) return;
+
+        if (combo) {
+          // Move the dropdown into our container (this prevents it being stuck at bottom)
+          if (combo.parentElement !== container) {
+            container.appendChild(combo);
+          }
+
+          // Style it so it appears right next to the translate button
+          combo.style.position = 'relative';   // relative inside our container
+          combo.style.top = '0px';
+          combo.style.right = '0px';
+          combo.style.zIndex = '10001';
+          combo.style.minWidth = '180px';
+          combo.style.padding = '6px 8px';
+          combo.style.borderRadius = '6px';
+          combo.style.border = '1px solid #ccc';
+          combo.style.background = '#fff';
+          combo.style.display = 'block';
+
+          // Hide google translate top banner iframe if present
+          const bannerFrame = document.querySelector('iframe.goog-te-banner-frame');
+          if (bannerFrame && bannerFrame.style.display !== 'none') {
+            bannerFrame.style.display = 'none';
+            // sometimes body gets top style from the banner, reset it
+            document.body.style.top = '0px';
+          }
+
+          return true;
+        } else {
+          // not ready yet, try again shortly
+          setTimeout(() => moveGoogleTranslateDropdown(Math.min(1000, retryDelay * 2)), retryDelay);
+          return false;
+        }
+      }
+
+      // Show the translate dropdown next to our button (call this on click)
+      function showGoogleTranslateUI() {
+        const container = document.getElementById('google_translate_element');
+        if (!container) return;
+
+        // Make container visible
+        container.style.display = 'block';
+
+        // Ensure the real dropdown is moved in and styled; if not ready, moveGoogleTranslateDropdown will retry
+        moveGoogleTranslateDropdown();
+
+        // Focus the dropdown so the user can open it with keyboard/hover
+        const combo = container.querySelector('.goog-te-combo');
+        if (combo) {
+          try { combo.focus(); } catch (e) {}
+        }
+
+        // Because Google sometimes re-creates the element, run move again after a short delay
+        setTimeout(moveGoogleTranslateDropdown, 300);
+      }
+
+      // Expose for React to call. Use (window as any).showGoogleTranslateUI() in TSX.
+      window.showGoogleTranslateUI = showGoogleTranslateUI;
+      </script>
     </body>
   </html>
   

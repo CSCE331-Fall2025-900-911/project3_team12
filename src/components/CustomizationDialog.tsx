@@ -13,6 +13,14 @@ import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
+import { useEffect } from 'react';
+
+// Let TypeScript know Google Translate adds a global object
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
 
 interface CustomizationDialogProps {
   tea: BubbleTea;
@@ -32,6 +40,21 @@ export function CustomizationDialog({
     toppings: [],
     size: 'medium',
   });
+
+  useEffect(() => {
+    if (open && window.google && window.google.translate) {
+      setTimeout(() => {
+        const element = document.getElementById('google_translate_element');
+        if (element) {
+          element.innerHTML = '';
+          new window.google.translate.TranslateElement(
+            { pageLanguage: 'en' },
+            'google_translate_element'
+          );
+        }
+      }, 300);
+    }
+  }, [open]);
 
   const handleAddToCart = () => {
     const cartItem: CartItem = {
