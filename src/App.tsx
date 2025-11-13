@@ -3,6 +3,7 @@ import { CartItem } from './types/types';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { MenuScreen } from './components/MenuScreen';
 import { CheckoutScreen } from './components/CheckoutScreen';
+import Magnifier from './components/Magnifier';
 
 type Screen = 'welcome' | 'menu' | 'checkout';
 
@@ -69,6 +70,7 @@ export default function App() {
 
   return (
     <>
+      <Magnifier />
       {currentScreen === 'welcome' && (
         <WelcomeScreen onStartOrder={handleStartOrder} />
       )}
