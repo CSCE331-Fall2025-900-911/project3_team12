@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import pool, { query } from './db.js';
 
+//test
 // Import routes
 import menuRoutes from './routes/menu.js';
 import orderRoutes from './routes/orders.js';
