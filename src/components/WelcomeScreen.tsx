@@ -8,6 +8,30 @@ interface WelcomeScreenProps {
 export function WelcomeScreen({ onStartOrder }: WelcomeScreenProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-yellow-50 flex items-center justify-center p-8">
+        <button
+          onClick={() => {
+          // call the function we exposed in index.html
+          (window as any).showGoogleTranslateUI?.();
+          // also ensure the container is visible (defensive)
+          const el = document.getElementById('google_translate_element');
+          if (el) el.style.display = 'block';
+        }}
+        style={{
+        position: 'absolute',
+        top: '1rem',
+        right: '1rem',
+        backgroundColor: '#facc15',
+        color: '#000',
+        padding: '0.5rem 1rem',
+        borderRadius: '0.5rem',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        zIndex: 9999,
+        }}
+    >
+      🌐 Translate
+       </button>
+
       <div className="text-center space-y-8 max-w-2xl">
         <div className="flex justify-center">
           <div className="bg-white p-8 rounded-3xl shadow-lg border-4 border-primary">
