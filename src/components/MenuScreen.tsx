@@ -30,7 +30,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
       <div className="bg-white shadow-md sticky top-0 z-10 border-b-4 border-primary">
         <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl text-primary">MaChomp Tea House</h1>
+            <h1 className="text-3xl text-primary">Machamp Tea House</h1>
             <p className="text-muted-foreground">Select your bubble tea</p>
           </div>
           <Button

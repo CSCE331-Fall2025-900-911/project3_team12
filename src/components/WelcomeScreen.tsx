@@ -11,13 +11,13 @@ export function WelcomeScreen({ onStartOrder }: WelcomeScreenProps) {
       <div className="text-center space-y-8 max-w-2xl">
         <div className="flex justify-center">
           <div className="bg-white p-8 rounded-3xl shadow-lg border-4 border-primary">
-            <img src={logo} alt="MaChomp Tea House Logo" className="w-64 h-auto" />
+            <img src={logo} alt="Machamp Tea House Logo" className="w-64 h-auto" />
           </div>
         </div>
         
         <div className="space-y-4">
           <h1 className="text-6xl text-primary">
-            Welcome to MaChomp Tea House
+            Welcome to Machamp Tea House
           </h1>
         </div>
 
@@ -30,10 +30,6 @@ export function WelcomeScreen({ onStartOrder }: WelcomeScreenProps) {
             Start Your Order
           </Button>
         </div>
-
-        <p className="text-muted-foreground pt-4">
-          Tap anywhere to begin
-        </p>
       </div>
     </div>
   );
