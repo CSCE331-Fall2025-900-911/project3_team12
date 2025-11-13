@@ -1,15 +1,22 @@
 import { useState } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CartItem } from './types/types';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { MenuScreen } from './components/MenuScreen';
 import { CheckoutScreen } from './components/CheckoutScreen';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { ManagerHeader } from './components/ManagerHeader';
+import { AuthProvider } from './contexts/AuthContext';
 import Magnifier from './components/Magnifier';
 import { MagnifierProvider } from './components/MagnifierContext';
+import { Button } from './components/ui/button';
 
 type Screen = 'welcome' | 'menu' | 'checkout';
+type AppMode = 'kiosk' | 'manager';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
+  const [appMode, setAppMode] = useState<AppMode>('kiosk');
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const handleStartOrder = () => {
@@ -69,30 +76,70 @@ export default function App() {
     setCurrentScreen('welcome');
   };
 
+  const toggleAppMode = () => {
+    setAppMode((prev) => (prev === 'kiosk' ? 'manager' : 'kiosk'));
+    setCurrentScreen('welcome');
+    setCart([]);
+  };
+
+  // Get Google Client ID from environment variable
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
   return (
-    <MagnifierProvider>
-      <>
-        <Magnifier />
-      {currentScreen === 'welcome' && (
-        <WelcomeScreen onStartOrder={handleStartOrder} />
-      )}
-      {currentScreen === 'menu' && (
-        <MenuScreen
-          cart={cart}
-          onAddToCart={handleAddToCart}
-          onViewCart={handleViewCart}
-        />
-      )}
-      {currentScreen === 'checkout' && (
-        <CheckoutScreen
-          cart={cart}
-          onBack={handleBackToMenu}
-          onUpdateQuantity={handleUpdateQuantity}
-          onRemoveItem={handleRemoveItem}
-          onCompleteOrder={handleCompleteOrder}
-        />
-      )}
-      </>
-    </MagnifierProvider>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <MagnifierProvider>
+          <>
+            <Magnifier />
+            {/* Mode Toggle Button - Always visible */}
+            <div className="fixed top-4 right-4 z-50">
+              <Button
+                onClick={toggleAppMode}
+                variant="outline"
+                className="shadow-lg"
+              >
+                {appMode === 'kiosk' ? 'Manager Mode' : 'Kiosk Mode'}
+              </Button>
+            </div>
+
+            {appMode === 'kiosk' ? (
+              // Kiosk Mode - Original App
+              <>
+                {currentScreen === 'welcome' && (
+                  <WelcomeScreen onStartOrder={handleStartOrder} />
+                )}
+                {currentScreen === 'menu' && (
+                  <MenuScreen
+                    cart={cart}
+                    onAddToCart={handleAddToCart}
+                    onViewCart={handleViewCart}
+                  />
+                )}
+                {currentScreen === 'checkout' && (
+                  <CheckoutScreen
+                    cart={cart}
+                    onBack={handleBackToMenu}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onRemoveItem={handleRemoveItem}
+                    onCompleteOrder={handleCompleteOrder}
+                  />
+                )}
+              </>
+            ) : (
+              // Manager Mode - Protected
+              <ProtectedRoute>
+                <ManagerHeader />
+                <div className="container mx-auto p-8">
+                  <h2 className="text-3xl font-bold mb-6">Welcome to Manager Dashboard</h2>
+                  <p className="text-gray-600">
+                    Add your manager features here (inventory management, reports, etc.)
+                  </p>
+                </div>
+              </ProtectedRoute>
+            )}
+          </>
+        </MagnifierProvider>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
