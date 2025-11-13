@@ -1,11 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useMagnifier } from './MagnifierContext';
 
 const LENS_SIZE = 350; // px
 const ZOOM = 2; // scale
 
 export default function Magnifier() {
-  const [active, setActive] = useState(false);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const { enabled: active, setEnabled } = useMagnifier();
+  const [pos, setPos] = React.useState({ x: 0, y: 0 });
   const lensRef = useRef<HTMLDivElement | null>(null);
   const cloneRef = useRef<HTMLElement | null>(null);
 
@@ -86,7 +87,7 @@ export default function Magnifier() {
     <>
       <button
         aria-pressed={active}
-        onClick={() => setActive(v => !v)}
+        onClick={() => setEnabled((v) => !v)}
         style={{
           position: 'fixed',
           right: 16,

@@ -4,6 +4,7 @@ import { WelcomeScreen } from './components/WelcomeScreen';
 import { MenuScreen } from './components/MenuScreen';
 import { CheckoutScreen } from './components/CheckoutScreen';
 import Magnifier from './components/Magnifier';
+import { MagnifierProvider } from './components/MagnifierContext';
 
 type Screen = 'welcome' | 'menu' | 'checkout';
 
@@ -69,8 +70,9 @@ export default function App() {
   };
 
   return (
-    <>
-      <Magnifier />
+    <MagnifierProvider>
+      <>
+        <Magnifier />
       {currentScreen === 'welcome' && (
         <WelcomeScreen onStartOrder={handleStartOrder} />
       )}
@@ -90,6 +92,7 @@ export default function App() {
           onCompleteOrder={handleCompleteOrder}
         />
       )}
-    </>
+      </>
+    </MagnifierProvider>
   );
 }
