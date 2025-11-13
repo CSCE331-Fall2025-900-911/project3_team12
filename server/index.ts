@@ -6,6 +6,7 @@ import pool, { query } from './db.js';
 // Import routes
 import menuRoutes from './routes/menu.js';
 import orderRoutes from './routes/orders.js';
+import authRoutes from './routes/auth.js';
 
 dotenv.config();
 
@@ -13,12 +14,21 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'https://project3team12.vercel.app'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {
