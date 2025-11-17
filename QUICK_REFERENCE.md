@@ -93,7 +93,7 @@ GET    /api/menu                      # Get all menu items
 GET    /api/menu/toppings/all         # Get toppings
 POST   /api/orders                    # Create order ⭐
 GET    /api/orders                    # Get all orders
-GET    /api/orders/:id                # Get specific order
+GET    /api/orders/:id                # Get specific ordergit
 PATCH  /api/orders/:id/status         # Update order status
 ```
 
