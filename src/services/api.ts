@@ -1,7 +1,17 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.PROD 
-  ? '/api'  // Use relative path in production (same domain)
-  : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');  // Use localhost in development
+function resolveApiBase() {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && envUrl.length > 0) return envUrl;
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3001/api';
+    return '/api';
+  }
+  // Fallback for SSR/build time
+  return import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
+}
+
+const API_BASE_URL = resolveApiBase();
 
 // Types
 export interface MenuItem {
