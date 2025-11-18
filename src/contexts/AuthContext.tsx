@@ -32,10 +32,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credential: string) => {
     try {
       setIsLoading(true);
-      // Use relative path in production, localhost in development
-      const apiUrl = import.meta.env.PROD 
-        ? '/api' 
-        : 'http://localhost:3001/api';
+      // Resolve API base the same way as services/api.ts
+      const envUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = envUrl && envUrl.length > 0
+        ? envUrl
+        : (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+          ? 'http://localhost:3001/api'
+          : '/api';
       // Send credential to backend for verification
       const response = await fetch(`${apiUrl}/auth/google`, {
         method: 'POST',
