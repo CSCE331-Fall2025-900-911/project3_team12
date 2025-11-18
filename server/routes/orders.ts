@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { query } from '../db.js';
+import pool, { query } from '../db.js';
 
 const router = express.Router();
 
@@ -77,33 +77,44 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // Create a new order
 router.post('/', async (req: Request, res: Response) => {
-  const client = await query('BEGIN', []);
-  
+  const { items, totalPrice } = req.body;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Order items are required' });
+  }
+
+  if (typeof totalPrice !== 'number' || Number.isNaN(totalPrice)) {
+    return res.status(400).json({ error: 'totalPrice must be a valid number' });
+  }
+
+  const client = await pool.connect();
+  let transactionStarted = false;
+
   try {
-    const { items, totalPrice } = req.body;
-    
-    // Insert order
-    const orderResult = await query(
+    await client.query('BEGIN');
+    transactionStarted = true;
+
+    // Insert order header so we can link items
+    const orderResult = await client.query(
       `INSERT INTO orders (total_price, status)
        VALUES ($1, $2)
        RETURNING id, total_price as "totalPrice", status, created_at as "createdAt"`,
       [totalPrice, 'pending']
     );
-    
+
     const orderId = orderResult.rows[0].id;
-    
-    // Insert order items
-    const orderItems = [];
+
+    const orderItems: any[] = [];
     for (const item of items) {
-      const itemResult = await query(
+      const itemResult = await client.query(
         `INSERT INTO order_items (
-          order_id, 
+          order_id,
           menu_item_id,
           item_name,
-          quantity, 
-          size, 
-          sugar_level, 
-          toppings, 
+          quantity,
+          size,
+          sugar_level,
+          toppings,
           price
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -115,23 +126,31 @@ router.post('/', async (req: Request, res: Response) => {
           item.quantity,
           item.size,
           item.sugarLevel,
-          JSON.stringify(item.toppings),
+          JSON.stringify(item.toppings ?? []),
           item.price
         ]
       );
       orderItems.push(itemResult.rows[0]);
     }
-    
-    await query('COMMIT', []);
-    
+
+    await client.query('COMMIT');
+
     res.status(201).json({
       ...orderResult.rows[0],
       items: orderItems
     });
   } catch (error) {
-    await query('ROLLBACK', []);
+    if (transactionStarted) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackErr) {
+        console.error('Error rolling back transaction:', rollbackErr);
+      }
+    }
     console.error('Error creating order:', error);
     res.status(500).json({ error: 'Failed to create order' });
+  } finally {
+    client.release();
   }
 });
 
