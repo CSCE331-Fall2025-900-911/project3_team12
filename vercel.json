@@ -1,4 +1,6 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
   "rewrites": [
     { "source": "/api/menu/:path*", "destination": "/api/menu" },
     { "source": "/api/orders/:path*", "destination": "/api/orders" },
