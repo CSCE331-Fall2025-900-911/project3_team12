@@ -6,7 +6,7 @@
       "config": { "distDir": "build" }
     },
     {
-      "src": "server/index.ts",
+      "src": "server/index.cjs",
       "use": "@vercel/node"
     }
   ],
