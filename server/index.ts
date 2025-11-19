@@ -86,20 +86,22 @@ app.use((err: Error, req: Request, res: Response, next: any) => {
   });
 });
 
-// Start server (works both locally and on Vercel)
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Database: ${process.env.DB_NAME}@${process.env.DB_HOST}`);
-});
-
-// Handle graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  pool.end(() => {
-    console.log('Database pool closed');
-    process.exit(0);
-  });
-});
-
-// Export for Vercel
+// Export for Vercel serverless
 export default app;
+
+// Start server for local development only
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Database: ${process.env.DB_NAME}@${process.env.DB_HOST}`);
+  });
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    pool.end(() => {
+      console.log('Database pool closed');
+      process.exit(0);
+    });
+  });
+}
