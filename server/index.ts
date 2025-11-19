@@ -54,6 +54,21 @@ app.get('/api/weather', async (req: Request, res: Response) => {
   }
 });
 
+// Root route
+app.get('/', (req: Request, res: Response) => {
+  res.json({
+    message: 'Project 3 Team 12 API Server',
+    status: 'running',
+    endpoints: {
+      health: '/api/health',
+      menu: '/api/menu',
+      orders: '/api/orders',
+      auth: '/api/auth',
+      weather: '/api/weather'
+    }
+  });
+});
+
 // Routes
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
