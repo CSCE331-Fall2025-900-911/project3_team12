@@ -1,18 +1,10 @@
 {
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "build" }
-    },
-    {
-      "src": "server/index.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "server/index.ts" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/menu/:path*", "destination": "/api/menu" },
+    { "source": "/api/orders/:path*", "destination": "/api/orders" },
+    { "source": "/api/auth/:path*", "destination": "/api/auth" },
+    { "source": "/api/health", "destination": "/api/health" },
+    { "source": "/api/weather", "destination": "/api/weather" },
+    { "source": "/api/menu/toppings/all", "destination": "/api/toppings" }
   ]
 }

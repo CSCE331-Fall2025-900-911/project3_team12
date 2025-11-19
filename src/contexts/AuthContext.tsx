@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? '/api' 
         : 'http://localhost:3001/api';
       // Send credential to backend for verification
-      const response = await fetch(`${apiUrl}/auth/google`, {
+      const response = await fetch(`${apiUrl}/auth?action=google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

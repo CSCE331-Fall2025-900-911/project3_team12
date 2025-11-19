@@ -73,13 +73,13 @@ export const menuApi = {
 
   // Get single menu item
   async getById(id: string): Promise<MenuItem> {
-    const response = await fetch(`${API_BASE_URL}/menu/${id}`);
+    const response = await fetch(`${API_BASE_URL}/menu?id=${id}`);
     return handleResponse<MenuItem>(response);
   },
 
   // Get all toppings
   async getToppings(): Promise<Topping[]> {
-    const response = await fetch(`${API_BASE_URL}/menu/toppings/all`);
+    const response = await fetch(`${API_BASE_URL}/toppings`);
     return handleResponse<Topping[]>(response);
   },
 
@@ -95,7 +95,7 @@ export const menuApi = {
 
   // Update menu item (admin)
   async update(id: string, item: Partial<MenuItem>): Promise<MenuItem> {
-    const response = await fetch(`${API_BASE_URL}/menu/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/menu?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
@@ -105,7 +105,7 @@ export const menuApi = {
 
   // Delete menu item (admin)
   async delete(id: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/menu/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/menu?id=${id}`, {
       method: 'DELETE',
     });
     return handleResponse<{ message: string }>(response);
@@ -122,7 +122,7 @@ export const ordersApi = {
 
   // Get single order
   async getById(id: number): Promise<Order> {
-    const response = await fetch(`${API_BASE_URL}/orders/${id}`);
+    const response = await fetch(`${API_BASE_URL}/orders?id=${id}`);
     return handleResponse<Order>(response);
   },
 
@@ -138,7 +138,7 @@ export const ordersApi = {
 
   // Update order status
   async updateStatus(id: number, status: string): Promise<Order> {
-    const response = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
+    const response = await fetch(`${API_BASE_URL}/orders?id=${id}&action=status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
@@ -148,7 +148,7 @@ export const ordersApi = {
 
   // Delete order (admin)
   async delete(id: number): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/orders/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/orders?id=${id}`, {
       method: 'DELETE',
     });
     return handleResponse<{ message: string }>(response);
