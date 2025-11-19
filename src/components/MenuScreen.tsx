@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { ShoppingCart } from 'lucide-react';
 import { CustomizationDialog } from './CustomizationDialog';
 import { useMagnifier } from './MagnifierContext';
+import { Switch } from './ui/switch';
 
 interface MenuScreenProps {
   cart: CartItem[];
@@ -18,6 +19,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
   const [selectedTea, setSelectedTea] = useState<BubbleTea | null>(null);
   const [showCustomization, setShowCustomization] = useState(false);
   const { setEnabled } = useMagnifier();
+  const [cashierMode, setCashierMode] = useState(false);
 
   const handleSelectTea = (tea: BubbleTea) => {
     setSelectedTea(tea);
@@ -29,7 +31,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-yellow-50">
+    <div className={`min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-yellow-50 ${cashierMode ? 'cashier-mode' : ''}`}>
       {/* Header */}
       <div className="bg-white shadow-md sticky top-0 z-10 border-b-4 border-primary">
         <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
@@ -37,29 +39,47 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
             <h1 className="text-3xl text-primary">Machamp Tea House</h1>
             <p className="text-muted-foreground">Select your bubble tea</p>
           </div>
-          <Button
-            onClick={onViewCart}
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-white relative"
-          >
-            <ShoppingCart className="mr-2 h-5 w-5" />
-            View Cart
-            {cartItemCount > 0 && (
-              <Badge className="ml-2 bg-destructive hover:bg-destructive/90">
-                {cartItemCount}
-              </Badge>
-            )}
-          </Button>
+          <div className="flex items-center">
+            <div className="flex items-center space-x-2 mr-4">
+              <label className="text-sm text-muted-foreground">Cashier</label>
+              <Switch
+                checked={cashierMode}
+                onCheckedChange={(v) => {
+                  // debug: log toggle value and update state
+                  console.log('cashier toggle:', v);
+                  setCashierMode(Boolean(v));
+                }}
+                aria-label="Toggle cashier mode"
+              />
+              {/* Visual debug indicator */}
+              <span className="text-xs text-muted-foreground ml-2">
+                {cashierMode ? 'ON' : 'OFF'}
+              </span>
+            </div>
+            <Button
+              onClick={onViewCart}
+              size="lg"
+              className="bg-primary hover:bg-primary/90 text-white relative"
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              View Cart
+              {cartItemCount > 0 && (
+                <Badge className="ml-2 bg-destructive hover:bg-destructive/90">
+                  {cartItemCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Menu Grid */}
       <div className="max-w-7xl mx-auto px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="menu-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {bubbleTeaMenu.map((tea) => (
             <Card
               key={tea.id}
-              className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group"
+              className="menu-card overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group"
               onClick={() => handleSelectTea(tea)}
             >
               <div className="aspect-square overflow-hidden bg-gray-100">
