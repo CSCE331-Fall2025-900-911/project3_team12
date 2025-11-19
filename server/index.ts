@@ -15,15 +15,32 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
+// Configure CORS origins dynamically: use CORS_ALLOWED env (comma-separated),
+// fall back to sensible defaults and include the current Vercel deployment URL when available.
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+].filter(Boolean);
+
+const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
+if (vercelUrl) defaultOrigins.push(vercelUrl);
+
+const envAllowed = (process.env.CORS_ALLOWED || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envAllowed]));
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:3000',
-    'https://project3-team12.vercel.app',
-    'https://machamp-eight.vercel.app'
-  ],
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g., server-side, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
 }));
 app.use(express.json());
 
