@@ -1,13 +1,13 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import pool, { query } from './db.js';
+import pool, { query } from './db';
 
 //test 2
 // Import routes
-import menuRoutes from './routes/menu.js';
-import orderRoutes from './routes/orders.js';
-import authRoutes from './routes/auth.js';
+import menuRoutes from './routes/menu';
+import orderRoutes from './routes/orders';
+import authRoutes from './routes/auth';
 
 dotenv.config();
 
