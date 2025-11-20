@@ -9,6 +9,8 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, login } = useAuth();
 
+  console.log('ProtectedRoute - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -18,8 +20,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
+    console.log('User not authenticated, showing login screen');
     return <ManagerLoginScreen onLoginSuccess={login} />;
   }
 
+  console.log('User authenticated, rendering children');
   return <>{children}</>;
 }

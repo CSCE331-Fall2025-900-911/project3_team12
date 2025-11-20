@@ -129,11 +129,12 @@ export function ManagerDashboard() {
     });
   };
 
-  console.log('ManagerDashboard rendering, user:', user, 'isLoading:', isLoading);
+  console.log('ManagerDashboard rendering, user:', user, 'isLoading:', isLoading, 'menuItems:', menuItems.length);
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <ManagerHeader />
+  try {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ManagerHeader />
       <div className="container mx-auto p-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Manager Dashboard</h1>
@@ -336,5 +337,13 @@ export function ManagerDashboard() {
         </Card>
       </div>
     </div>
-  );
+    );
+  } catch (error) {
+    console.error('Error rendering ManagerDashboard:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-600">Error loading dashboard. Check console for details.</div>
+      </div>
+    );
+  }
 }

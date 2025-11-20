@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { ManagerHeader } from './components/ManagerHeader';
 import { ManagerDashboard } from './components/ManagerDashboard';
 import { ManagerDashboardSimple } from './components/ManagerDashboardSimple';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import Magnifier from './components/Magnifier';
 import { MagnifierProvider } from './components/MagnifierContext';
@@ -128,9 +129,11 @@ export default function App() {
               </>
             ) : (
               // Manager Mode - Protected
-              <ProtectedRoute>
-                <ManagerDashboard />
-              </ProtectedRoute>
+              <ErrorBoundary>
+                <ProtectedRoute>
+                  <ManagerDashboard />
+                </ProtectedRoute>
+              </ErrorBoundary>
             )}
           </>
         </MagnifierProvider>
