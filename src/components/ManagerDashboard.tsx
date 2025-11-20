@@ -38,7 +38,10 @@ export function ManagerDashboard() {
   });
 
   useEffect(() => {
-    loadMenuItems();
+    console.log('ManagerDashboard mounted, loading menu items...');
+    loadMenuItems().catch(err => {
+      console.error('Failed to load menu items in useEffect:', err);
+    });
   }, []);
 
   const loadMenuItems = async () => {
@@ -47,9 +50,12 @@ export function ManagerDashboard() {
       setError(null);
       const items = await menuApi.getAll();
       setMenuItems(items);
+      console.log('Menu items loaded successfully:', items);
     } catch (err) {
-      setError('Failed to load menu items');
-      console.error(err);
+      console.error('Error loading menu items:', err);
+      setError('Failed to load menu items. You can still add new items.');
+      // Set empty array so the page still renders
+      setMenuItems([]);
     } finally {
       setIsLoading(false);
     }
@@ -136,13 +142,15 @@ export function ManagerDashboard() {
     });
   };
 
+  console.log('ManagerDashboard rendering, user:', user, 'isLoading:', isLoading);
+
   return (
-    <>
+    <div className="min-h-screen bg-gray-50">
       <ManagerHeader />
       <div className="container mx-auto p-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Manager Dashboard</h1>
-          <p className="text-gray-600">Welcome, {user?.name}</p>
+          <p className="text-gray-600">Welcome, {user?.name || 'Manager'}</p>
         </div>
 
         {error && (
@@ -359,6 +367,6 @@ export function ManagerDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </div>
   );
 }

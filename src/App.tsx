@@ -7,6 +7,7 @@ import { CheckoutScreen } from './components/CheckoutScreen';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ManagerHeader } from './components/ManagerHeader';
 import { ManagerDashboard } from './components/ManagerDashboard';
+import { ManagerDashboardSimple } from './components/ManagerDashboardSimple';
 import { AuthProvider } from './contexts/AuthContext';
 import Magnifier from './components/Magnifier';
 import { MagnifierProvider } from './components/MagnifierContext';
@@ -128,7 +129,7 @@ export default function App() {
             ) : (
               // Manager Mode - Protected
               <ProtectedRoute>
-                <ManagerDashboard />
+                <ManagerDashboardSimple />
               </ProtectedRoute>
             )}
           </>

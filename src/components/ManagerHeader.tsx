@@ -13,7 +13,17 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 export function ManagerHeader() {
   const { user, logout } = useAuth();
 
-  if (!user) return null;
+  console.log('ManagerHeader rendering with user:', user);
+
+  if (!user) {
+    return (
+      <header className="bg-white shadow-sm border-b">
+        <div className="container mx-auto px-4 py-3">
+          <h1 className="text-2xl font-bold text-gray-800">Manager Dashboard</h1>
+        </div>
+      </header>
+    );
+  }
 
   const initials = user.name
     .split(' ')
