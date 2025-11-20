@@ -6,6 +6,7 @@ import { MenuScreen } from './components/MenuScreen';
 import { CheckoutScreen } from './components/CheckoutScreen';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ManagerHeader } from './components/ManagerHeader';
+import { ManagerDashboard } from './components/ManagerDashboard';
 import { AuthProvider } from './contexts/AuthContext';
 import Magnifier from './components/Magnifier';
 import { MagnifierProvider } from './components/MagnifierContext';
@@ -91,13 +92,12 @@ export default function App() {
         <MagnifierProvider>
           <>
             <Magnifier />
-            {/* Mode Toggle Button - Always visible */}
-            <div className="fixed top-4 right-4 z-50">
-              <Button
-                onClick={toggleAppMode}
-                variant="outline"
-                className="shadow-lg"
-              >
+                  <div className="fixed top-6 left-6 z-50">
+                    <Button
+                    onClick={toggleAppMode}
+                    variant="outline"
+                    className="shadow-lg px-6 py-3"
+                    >
                 {appMode === 'kiosk' ? 'Manager Mode' : 'Kiosk Mode'}
               </Button>
             </div>
@@ -128,13 +128,7 @@ export default function App() {
             ) : (
               // Manager Mode - Protected
               <ProtectedRoute>
-                <ManagerHeader />
-                <div className="container mx-auto p-8">
-                  <h2 className="text-3xl font-bold mb-6">Welcome to Manager Dashboard</h2>
-                  <p className="text-gray-600">
-                    Add your manager features here (inventory management, reports, etc.)
-                  </p>
-                </div>
+                <ManagerDashboard />
               </ProtectedRoute>
             )}
           </>
