@@ -129,7 +129,7 @@ export default function App() {
             ) : (
               // Manager Mode - Protected
               <ProtectedRoute>
-                <ManagerDashboardSimple />
+                <ManagerDashboard />
               </ProtectedRoute>
             )}
           </>
