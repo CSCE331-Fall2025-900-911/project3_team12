@@ -47,8 +47,13 @@ export function ManagerDashboard() {
       setIsLoading(true);
       setError(null);
       const items = await menuApi.getAll();
-      setMenuItems(items);
-      console.log('Menu items loaded successfully:', items);
+      // Ensure basePrice is a number
+      const normalizedItems = items.map(item => ({
+        ...item,
+        basePrice: typeof item.basePrice === 'string' ? parseFloat(item.basePrice) : item.basePrice
+      }));
+      setMenuItems(normalizedItems);
+      console.log('Menu items loaded successfully:', normalizedItems);
     } catch (err) {
       console.error('Error loading menu items:', err);
       setError('Failed to load menu items from server. You can still add new items.');
@@ -274,7 +279,7 @@ export function ManagerDashboard() {
                   <CardContent>
                     <div className="space-y-2">
                       <p className="text-sm">
-                        <span className="font-semibold">Price:</span> ${item.basePrice.toFixed(2)}
+                        <span className="font-semibold">Price:</span> ${typeof item.basePrice === 'number' ? item.basePrice.toFixed(2) : parseFloat(item.basePrice).toFixed(2)}
                       </p>
                       <p className="text-sm">
                         <span className="font-semibold">Category:</span>{' '}
