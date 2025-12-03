@@ -35,6 +35,12 @@ export function ManagerDashboard() {
     category: 'milk-tea',
   });
 
+  // User management state
+  const [users, setUsers] = useState<string[]>([]);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [userError, setUserError] = useState<string | null>(null);
+  const [userSuccess, setUserSuccess] = useState<string | null>(null);
+
   useEffect(() => {
     console.log('ManagerDashboard mounted, loading menu items...');
     loadMenuItems().catch(err => {
@@ -132,6 +138,41 @@ export function ManagerDashboard() {
       image: '',
       category: 'milk-tea',
     });
+  };
+
+  const handleAddUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    setUserError(null);
+    setUserSuccess(null);
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUserEmail)) {
+      setUserError('Please enter a valid email address');
+      return;
+    }
+
+    // Check if user already exists
+    if (users.includes(newUserEmail)) {
+      setUserError('This email is already in the system');
+      return;
+    }
+
+    // Add user to the list
+    setUsers([...users, newUserEmail]);
+    setUserSuccess(`User ${newUserEmail} added successfully!`);
+    setNewUserEmail('');
+
+    // Clear success message after 3 seconds
+    setTimeout(() => setUserSuccess(null), 3000);
+  };
+
+  const handleRemoveUser = (email: string) => {
+    if (confirm(`Are you sure you want to remove ${email}?`)) {
+      setUsers(users.filter(user => user !== email));
+      setUserSuccess(`User ${email} removed successfully!`);
+      setTimeout(() => setUserSuccess(null), 3000);
+    }
   };
 
   console.log('ManagerDashboard rendering, user:', user, 'isLoading:', isLoading, 'menuItems:', menuItems.length);
@@ -312,7 +353,7 @@ export function ManagerDashboard() {
         </div>
 
         {/* Statistics */}
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle>Statistics</CardTitle>
             <CardDescription>Overview of menu items</CardDescription>
@@ -337,6 +378,70 @@ export function ManagerDashboard() {
                   {menuItems.filter((i) => i.category === 'specialty').length}
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* User Management Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>User Management</CardTitle>
+            <CardDescription>Add and manage authorized users</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {userError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{userError}</AlertDescription>
+              </Alert>
+            )}
+
+            {userSuccess && (
+              <Alert className="mb-4 bg-green-50 text-green-900 border-green-200">
+                <AlertDescription>{userSuccess}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Add User Form */}
+            <form onSubmit={handleAddUser} className="mb-6">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    placeholder="Enter user email (e.g., user@example.com)"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit">Add User</Button>
+              </div>
+            </form>
+
+            {/* User List */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Authorized Users ({users.length})</h3>
+              {users.length === 0 ? (
+                <p className="text-gray-500 text-sm">No users added yet. Add your first user above.</p>
+              ) : (
+                <div className="space-y-2">
+                  {users.map((email, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md border"
+                    >
+                      <span className="text-sm font-medium">{email}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveUser(email)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
