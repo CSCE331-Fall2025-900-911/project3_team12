@@ -93,8 +93,6 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
           open={showCustomization}
           onClose={() => {
             setShowCustomization(false);
-            // re-enable magnifier when dialog closes
-            setEnabled(true);
           }}
           onAddToCart={onAddToCart}
         />
