@@ -263,3 +263,5 @@ WHERE status = 'completed';
 ---
 
 **Congratulations!** 🎊 Your bubble tea kiosk is now connected to the PostgreSQL database on AWS!
+
+// test

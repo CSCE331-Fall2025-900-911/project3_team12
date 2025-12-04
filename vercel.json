@@ -6,6 +6,7 @@
     { "source": "/api/orders/:path*", "destination": "/api/orders" },
     { "source": "/api/auth/:path*", "destination": "/api/auth" },
     { "source": "/api/managers/:path*", "destination": "/api/managers" },
+    { "source": "/api/inventory/:path*", "destination": "/api/inventory" },
     { "source": "/api/health", "destination": "/api/health" },
     { "source": "/api/weather", "destination": "/api/weather" },
     { "source": "/api/menu/toppings/all", "destination": "/api/toppings" }
