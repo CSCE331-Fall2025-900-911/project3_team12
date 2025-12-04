@@ -9,14 +9,17 @@ export default function Magnifier() {
   const [pos, setPos] = React.useState({ x: 0, y: 0 });
   const lensRef = useRef<HTMLDivElement | null>(null);
   const cloneRef = useRef<HTMLElement | null>(null);
+  const enabledRef = useRef<boolean>(active);
+  const prevEnabledRef = useRef<boolean>(false);
+  const longPressTriggeredRef = useRef<boolean>(false);
 
   useEffect(() => {
-    function handleMove(e: MouseEvent) {
+    function handleMove(e: PointerEvent) {
       setPos({ x: e.clientX, y: e.clientY });
     }
 
     if (active) {
-      document.addEventListener('mousemove', handleMove);
+      document.addEventListener('pointermove', handleMove, { passive: true } as any);
       // create clone of the app root to render inside the lens
       const root = document.getElementById('root') || document.body;
       const clone = (root.cloneNode(true) as HTMLElement) || null;
@@ -46,7 +49,7 @@ export default function Magnifier() {
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('pointermove', handleMove as any);
       // cleanup clone
       if (cloneRef.current && cloneRef.current.parentElement) {
         cloneRef.current.parentElement.removeChild(cloneRef.current);
@@ -54,6 +57,63 @@ export default function Magnifier() {
       cloneRef.current = null;
     };
   }, [active]);
+
+  // keep a ref of the current enabled state so long-press handlers can read it
+  useEffect(() => {
+    enabledRef.current = active;
+  }, [active]);
+
+  // Long-press detection: enable magnifier while pressing (transient) if it wasn't
+  // already enabled. Restore previous enabled state on release.
+  useEffect(() => {
+    let timer: number | null = null;
+
+    function clearTimer() {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+    }
+
+    function onPointerDown(e: PointerEvent) {
+      // Start long-press timer. If it fires, enable magnifier and mark it as
+      // triggered by long-press. Record pointer position immediately so lens
+      // appears near the touch point.
+      const x = e.clientX;
+      const y = e.clientY;
+      timer = window.setTimeout(() => {
+        prevEnabledRef.current = enabledRef.current;
+        if (!enabledRef.current) {
+          longPressTriggeredRef.current = true;
+          setEnabled(true);
+        } else {
+          longPressTriggeredRef.current = false;
+        }
+        setPos({ x, y });
+      }, 350);
+    }
+
+    function onPointerUp() {
+      // clear timer and, if we enabled magnifier via long-press, restore
+      // previous state (typically disable it).
+      clearTimer();
+      if (longPressTriggeredRef.current) {
+        if (!prevEnabledRef.current) setEnabled(false);
+        longPressTriggeredRef.current = false;
+      }
+    }
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
+
+    return () => {
+      clearTimer();
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerUp);
+    };
+  }, [setEnabled]);
 
   useEffect(() => {
     // update lens transform / position when mouse moves
