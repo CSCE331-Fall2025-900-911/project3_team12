@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { menuApi, managersApi, Manager, reportsApi } from '../services/api';
 import { menuApi, managersApi, Manager, inventoryApi, InventoryItem, InventoryUsageReport } from '../services/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -26,6 +27,12 @@ export function ManagerDashboard() {
   const [success, setSuccess] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  // Reports state
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState<string | null>(null);
+  const [salesReport, setSalesReport] = useState<any | null>(null);
+  const [popularReport, setPopularReport] = useState<any[] | null>(null);
+  const [statusReport, setStatusReport] = useState<any[] | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -361,6 +368,114 @@ export function ManagerDashboard() {
           <h1 className="text-4xl font-bold mb-2">Manager Dashboard</h1>
           <p className="text-gray-600">Welcome, {user?.name || 'Manager'}</p>
         </div>
+        {/* Reports Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Reports</CardTitle>
+            <CardDescription>Generate database reports (sales, popular items, order status)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {reportsError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{reportsError}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex gap-3 mb-4">
+              <Button onClick={async () => {
+                setReportsError(null);
+                setReportsLoading(true);
+                try {
+                  const data = await reportsApi.getSalesSummary();
+                  setSalesReport(data);
+                } catch (err: any) {
+                  console.error('Sales report error', err);
+                  setReportsError(err?.message || 'Failed to generate sales report');
+                } finally { setReportsLoading(false); }
+              }}>
+                Generate Sales Report
+              </Button>
+
+              <Button onClick={async () => {
+                setReportsError(null);
+                setReportsLoading(true);
+                try {
+                  const data = await reportsApi.getPopularDrinks();
+                  setPopularReport(data);
+                } catch (err: any) {
+                  console.error('Popular report error', err);
+                  setReportsError(err?.message || 'Failed to generate popular items report');
+                } finally { setReportsLoading(false); }
+              }}>
+                Generate Popular Items (X Report)
+              </Button>
+
+              <Button onClick={async () => {
+                setReportsError(null);
+                setReportsLoading(true);
+                try {
+                  const data = await reportsApi.getOrdersByStatus();
+                  setStatusReport(data);
+                } catch (err: any) {
+                  console.error('Status report error', err);
+                  setReportsError(err?.message || 'Failed to generate orders-by-status report');
+                } finally { setReportsLoading(false); }
+              }}>
+                Generate Orders-by-Status (Z Report)
+              </Button>
+            </div>
+
+            {reportsLoading && <div className="text-sm text-gray-600">Generating report...</div>}
+
+            {salesReport && (
+              <div className="mt-4">
+                <h4 className="font-semibold">Sales Summary</h4>
+                <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-3 rounded-md">{JSON.stringify(salesReport, null, 2)}</pre>
+              </div>
+            )}
+
+            {popularReport && (
+              <div className="mt-4">
+                <h4 className="font-semibold">Popular Items</h4>
+                <table className="w-full text-sm mt-2 border-collapse">
+                  <thead>
+                    <tr className="text-left border-b"><th>Name</th><th>Times Ordered</th><th>Total Quantity</th></tr>
+                  </thead>
+                  <tbody>
+                    {popularReport.map((r) => (
+                      <tr key={r.id} className="border-b odd:bg-white even:bg-gray-50">
+                        <td className="py-2">{r.name}</td>
+                        <td className="py-2">{r.times_ordered}</td>
+                        <td className="py-2">{r.total_quantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {statusReport && (
+              <div className="mt-4">
+                <h4 className="font-semibold">Orders by Status</h4>
+                <table className="w-full text-sm mt-2 border-collapse">
+                  <thead>
+                    <tr className="text-left border-b"><th>Status</th><th>Count</th><th>Total Value</th></tr>
+                  </thead>
+                  <tbody>
+                    {statusReport.map((s, idx) => (
+                      <tr key={idx} className="border-b odd:bg-white even:bg-gray-50">
+                        <td className="py-2">{s.status}</td>
+                        <td className="py-2">{s.count}</td>
+                        <td className="py-2">${parseFloat(s.total_value || 0).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+          </CardContent>
+        </Card>
 
         <Tabs defaultValue="menu" className="w-full">
           <TabsList className="!flex !gap-4 !mb-6 !bg-transparent !h-auto !p-0 !w-fit">
@@ -1016,4 +1131,3 @@ export function ManagerDashboard() {
   }
 }
 
-//change

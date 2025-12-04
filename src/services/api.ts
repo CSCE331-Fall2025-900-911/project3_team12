@@ -296,4 +296,25 @@ export const healthApi = {
   },
 };
 
+// Reports API
+export const reportsApi = {
+  // Sales summary
+  async getSalesSummary(): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/reports/sales`);
+    return handleResponse(response);
+  },
+
+  // Most popular drinks
+  async getPopularDrinks(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/reports/popular`);
+    return handleResponse<any[]>(response);
+  },
+
+  // Orders grouped by status
+  async getOrdersByStatus(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/reports/status`);
+    return handleResponse<any[]>(response);
+  }
+};
+
 export { ApiError };
