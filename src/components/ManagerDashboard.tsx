@@ -331,19 +331,19 @@ export function ManagerDashboard() {
           <TabsList className="!flex !gap-4 !mb-6 !bg-transparent !h-auto !p-0 !w-fit">
             <TabsTrigger 
               value="menu"
-              className="!bg-blue-600 !text-white hover:!bg-blue-700 data-[state=active]:!bg-blue-800 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-0"
+              className="!bg-blue-600 !text-white hover:!bg-blue-700 data-[state=active]:!bg-blue-800 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-2 !border-blue-800"
             >
               Menu Items
             </TabsTrigger>
             <TabsTrigger 
               value="inventory"
-              className="!bg-blue-600 !text-white hover:!bg-blue-700 data-[state=active]:!bg-blue-800 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-0"
+              className="!bg-blue-600 !text-white hover:!bg-blue-700 data-[state=active]:!bg-blue-800 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-2 !border-blue-800"
             >
               Inventory
             </TabsTrigger>
             <TabsTrigger 
               value="users"
-              className="!bg-blue-600 !text-white hover:!bg-blue-700 data-[state=active]:!bg-blue-800 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-0"
+              className="!bg-blue-600 !text-white hover:!bg-blue-700 data-[state=active]:!bg-blue-800 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-2 !border-blue-800"
             >
               User Management
             </TabsTrigger>
