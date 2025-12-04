@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { menuApi, managersApi, Manager, reportsApi } from '../services/api';
-import { menuApi, managersApi, Manager, inventoryApi, InventoryItem, InventoryUsageReport } from '../services/api';
+import { menuApi, managersApi, Manager, inventoryApi, InventoryItem, InventoryUsageReport, reportsApi } from '../services/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -33,6 +32,14 @@ export function ManagerDashboard() {
   const [salesReport, setSalesReport] = useState<any | null>(null);
   const [popularReport, setPopularReport] = useState<any[] | null>(null);
   const [statusReport, setStatusReport] = useState<any[] | null>(null);
+
+  // Sales date range state
+  const [salesStartDate, setSalesStartDate] = useState('');
+  const [salesEndDate, setSalesEndDate] = useState('');
+
+  // Report timestamps for X/Z reports
+  const [popularReportTime, setPopularReportTime] = useState<string | null>(null);
+  const [statusReportTime, setStatusReportTime] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -381,12 +388,38 @@ export function ManagerDashboard() {
               </Alert>
             )}
 
+            <div className="flex gap-3 mb-4 items-end">
+              <div className="flex items-center gap-2">
+                <label className="text-sm">Sales From</label>
+                <Input
+                  type="date"
+                  value={salesStartDate}
+                  onChange={(e) => setSalesStartDate(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm">To</label>
+                <Input
+                  type="date"
+                  value={salesEndDate}
+                  onChange={(e) => setSalesEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+
             <div className="flex gap-3 mb-4">
               <Button onClick={async () => {
                 setReportsError(null);
                 setReportsLoading(true);
                 try {
-                  const data = await reportsApi.getSalesSummary();
+                  let data;
+                  if (salesStartDate && salesEndDate) {
+                    const startIso = new Date(salesStartDate + 'T00:00:00').toISOString();
+                    const endIso = new Date(salesEndDate + 'T23:59:59.999').toISOString();
+                    data = await reportsApi.getSalesSummary(startIso, endIso);
+                  } else {
+                    data = await reportsApi.getSalesSummary();
+                  }
                   setSalesReport(data);
                 } catch (err: any) {
                   console.error('Sales report error', err);
@@ -400,8 +433,15 @@ export function ManagerDashboard() {
                 setReportsError(null);
                 setReportsLoading(true);
                 try {
-                  const data = await reportsApi.getPopularDrinks();
+                  // compute today's range explicitly
+                  const now = new Date();
+                  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+                  const startIso = startOfDay.toISOString();
+                  const endIso = endOfDay.toISOString();
+                  const data = await reportsApi.getPopularDrinks(startIso, endIso);
                   setPopularReport(data);
+                  setPopularReportTime(new Date().toLocaleString());
                 } catch (err: any) {
                   console.error('Popular report error', err);
                   setReportsError(err?.message || 'Failed to generate popular items report');
@@ -414,8 +454,15 @@ export function ManagerDashboard() {
                 setReportsError(null);
                 setReportsLoading(true);
                 try {
-                  const data = await reportsApi.getOrdersByStatus();
+                  // today's range
+                  const now = new Date();
+                  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+                  const startIso = startOfDay.toISOString();
+                  const endIso = endOfDay.toISOString();
+                  const data = await reportsApi.getOrdersByStatus(startIso, endIso);
                   setStatusReport(data);
+                  setStatusReportTime(new Date().toLocaleString());
                 } catch (err: any) {
                   console.error('Status report error', err);
                   setReportsError(err?.message || 'Failed to generate orders-by-status report');
@@ -436,7 +483,10 @@ export function ManagerDashboard() {
 
             {popularReport && (
               <div className="mt-4">
-                <h4 className="font-semibold">Popular Items</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold">Popular Items</h4>
+                  {popularReportTime && <div className="text-sm text-gray-500">As of: {popularReportTime}</div>}
+                </div>
                 <table className="w-full text-sm mt-2 border-collapse">
                   <thead>
                     <tr className="text-left border-b"><th>Name</th><th>Times Ordered</th><th>Total Quantity</th></tr>
@@ -456,7 +506,10 @@ export function ManagerDashboard() {
 
             {statusReport && (
               <div className="mt-4">
-                <h4 className="font-semibold">Orders by Status</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold">Orders by Status</h4>
+                  {statusReportTime && <div className="text-sm text-gray-500">As of: {statusReportTime}</div>}
+                </div>
                 <table className="w-full text-sm mt-2 border-collapse">
                   <thead>
                     <tr className="text-left border-b"><th>Status</th><th>Count</th><th>Total Value</th></tr>
