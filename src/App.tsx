@@ -14,7 +14,7 @@ import Magnifier from './components/Magnifier';
 import { MagnifierProvider } from './components/MagnifierContext';
 import { Button } from './components/ui/button';
 
-type Screen = 'welcome' | 'menu' | 'checkout';
+type Screen = 'welcome' | 'menu' | 'menu-no-images' | 'checkout';
 type AppMode = 'kiosk' | 'manager';
 
 export default function App() {
@@ -24,6 +24,10 @@ export default function App() {
 
   const handleStartOrder = () => {
     setCurrentScreen('menu');
+  };
+
+  const handleStartOrderNoImages = () => {
+    setCurrentScreen('menu-no-images');
   };
 
   const handleAddToCart = (item: CartItem) => {
@@ -74,6 +78,10 @@ export default function App() {
     setCurrentScreen('menu');
   };
 
+  const handleBackToWelcome = () => {
+    setCurrentScreen('welcome');
+  };
+
   const handleCompleteOrder = () => {
     setCart([]);
     setCurrentScreen('welcome');
@@ -108,13 +116,23 @@ export default function App() {
               // Kiosk Mode - Original App
               <>
                 {currentScreen === 'welcome' && (
-                  <WelcomeScreen onStartOrder={handleStartOrder} />
+                  <WelcomeScreen onStartOrder={handleStartOrder} onStartOrderNoImages={handleStartOrderNoImages} />
                 )}
                 {currentScreen === 'menu' && (
                   <MenuScreen
                     cart={cart}
                     onAddToCart={handleAddToCart}
                     onViewCart={handleViewCart}
+                    onBack={handleBackToWelcome}
+                  />
+                )}
+                {currentScreen === 'menu-no-images' && (
+                  <MenuScreen
+                    cart={cart}
+                    onAddToCart={handleAddToCart}
+                    onViewCart={handleViewCart}
+                    onBack={handleBackToWelcome}
+                    showImages={false}
                   />
                 )}
                 {currentScreen === 'checkout' && (

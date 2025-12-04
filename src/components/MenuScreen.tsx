@@ -4,7 +4,7 @@ import { bubbleTeaMenu } from '../data/menu';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import { CustomizationDialog } from './CustomizationDialog';
 import { useMagnifier } from './MagnifierContext';
 
@@ -12,9 +12,11 @@ interface MenuScreenProps {
   cart: CartItem[];
   onAddToCart: (item: CartItem) => void;
   onViewCart: () => void;
+  onBack: () => void;
+  showImages?: boolean;
 }
 
-export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
+export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages = true }: MenuScreenProps) {
   const [selectedTea, setSelectedTea] = useState<BubbleTea | null>(null);
   const [showCustomization, setShowCustomization] = useState(false);
   const { setEnabled } = useMagnifier();
@@ -34,6 +36,15 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
       <div className="bg-white shadow-md sticky top-0 z-10 border-b-4 border-primary">
         <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
           <div>
+            <Button
+              onClick={onBack}
+              variant="outline"
+              size="lg"
+              className="border-2 border-primary text-primary hover:bg-primary hover:text-white"
+            >
+              <ArrowLeft className="mr-2 h-5 w-5" />
+              Back
+            </Button>
             <h1 className="text-3xl text-primary">Machamp Tea House</h1>
             <p className="text-muted-foreground">Select your bubble tea</p>
           </div>
@@ -55,30 +66,44 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
 
       {/* Menu Grid */}
       <div className="max-w-7xl mx-auto px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          className={
+            showImages
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+          }
+        >
           {bubbleTeaMenu.map((tea) => (
             <Card
               key={tea.id}
-              className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group"
+              className="h-full overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col"
               onClick={() => handleSelectTea(tea)}
             >
-              <div className="aspect-square overflow-hidden bg-gray-100">
-                <img
-                  src={tea.image}
-                  alt={tea.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="p-6 space-y-3">
+              {showImages && (
+                <div className="aspect-square overflow-hidden bg-gray-100">
+                  <img
+                    src={tea.image}
+                    alt={tea.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+              )}
+              <div className={showImages ? "p-4 space-y-2 flex-1 flex flex-col" : "p-3 space-y-1 flex-1 flex flex-col"}>
                 <div className="flex items-start justify-between">
-                  <h3 className="text-xl">{tea.name}</h3>
+                  <h3 className={showImages ? "text-xl" : ""}>{tea.name}</h3>
                   <Badge variant="secondary" className="ml-2 bg-accent text-accent-foreground">
                     ${tea.basePrice.toFixed(2)}
                   </Badge>
                 </div>
-                <p className="text-muted-foreground">{tea.description}</p>
-                <Button className="w-full bg-primary hover:bg-primary/90">
-                  Customize & Add
+                {showImages && <p className="text-muted-foreground">{tea.description}</p>}
+                <Button
+                  className={
+                    showImages
+                      ? "w-full bg-primary hover:bg-primary/90"
+                      : "w-full bg-primary hover:bg-primary/90 py-1 h-8"
+                  }
+                >
+                  {showImages ? "Customize & Add" : "Add"}
                 </Button>
               </div>
             </Card>
