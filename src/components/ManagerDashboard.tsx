@@ -328,10 +328,25 @@ export function ManagerDashboard() {
         </div>
 
         <Tabs defaultValue="menu" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="menu">Menu Items</TabsTrigger>
-            <TabsTrigger value="inventory">Inventory</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto p-2 bg-gray-100 rounded-lg">
+            <TabsTrigger 
+              value="menu"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 py-3 rounded-md font-medium transition-all"
+            >
+              Menu Items
+            </TabsTrigger>
+            <TabsTrigger 
+              value="inventory"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 py-3 rounded-md font-medium transition-all"
+            >
+              Inventory
+            </TabsTrigger>
+            <TabsTrigger 
+              value="users"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 py-3 rounded-md font-medium transition-all"
+            >
+              User Management
+            </TabsTrigger>
           </TabsList>
 
           {/* Menu Items Tab */}
