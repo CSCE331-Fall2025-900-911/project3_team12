@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
+import { query } from '../db';
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -25,24 +26,37 @@ router.post('/google', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    // Optional: Check if the email is from an authorized domain
-    // Uncomment and modify this if you want to restrict to specific emails/domains
-    /*
-    const authorizedDomains = ['yourdomain.com'];
-    const emailDomain = payload.email?.split('@')[1];
-    
-    if (!authorizedDomains.includes(emailDomain || '')) {
-      return res.status(403).json({ error: 'Unauthorized domain' });
+    // Check if the email is in the managers table
+    const email = payload.email;
+    if (!email) {
+      return res.status(401).json({ error: 'Email not found in token' });
     }
-    */
 
-    // Return user information
-    res.json({
-      email: payload.email,
-      name: payload.name,
-      picture: payload.picture,
-      email_verified: payload.email_verified,
-    });
+    try {
+      const managerCheck = await query('SELECT id, email FROM managers WHERE email = $1', [email]);
+      
+      if (managerCheck.rows.length === 0) {
+        return res.status(403).json({ 
+          error: 'Unauthorized',
+          message: 'Your email is not authorized to access the manager dashboard. Please contact an administrator.'
+        });
+      }
+
+      // Return user information if authorized
+      res.json({
+        email: payload.email,
+        name: payload.name,
+        picture: payload.picture,
+        email_verified: payload.email_verified,
+        isManager: true
+      });
+    } catch (dbError) {
+      console.error('Database error during authorization check:', dbError);
+      return res.status(500).json({ 
+        error: 'Authorization check failed',
+        message: 'Unable to verify manager status. Please try again later.'
+      });
+    }
   } catch (error) {
     console.error('Auth error:', error);
     res.status(401).json({ 
@@ -79,11 +93,32 @@ router.get('/me', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    res.json({
-      email: payload.email,
-      name: payload.name,
-      picture: payload.picture,
-    });
+    // Check if the email is in the managers table
+    const email = payload.email;
+    if (!email) {
+      return res.status(401).json({ error: 'Email not found in token' });
+    }
+
+    try {
+      const managerCheck = await query('SELECT id, email FROM managers WHERE email = $1', [email]);
+      
+      if (managerCheck.rows.length === 0) {
+        return res.status(403).json({ 
+          error: 'Unauthorized',
+          message: 'Your email is not authorized to access the manager dashboard.'
+        });
+      }
+
+      res.json({
+        email: payload.email,
+        name: payload.name,
+        picture: payload.picture,
+        isManager: true
+      });
+    } catch (dbError) {
+      console.error('Database error during /me check:', dbError);
+      return res.status(500).json({ error: 'Authorization check failed' });
+    }
   } catch (error) {
     res.status(401).json({ error: 'Invalid or expired token' });
   }

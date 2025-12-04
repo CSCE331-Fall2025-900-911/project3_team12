@@ -33,46 +33,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Decode the JWT token to get user info
-      const base64Url = credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
+      // Verify with backend first (this checks if user is a manager)
+      const apiUrl = import.meta.env.PROD 
+        ? '/api' 
+        : 'http://localhost:3001/api';
       
-      const payload = JSON.parse(jsonPayload);
+      const response = await fetch(`${apiUrl}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ credential }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Authentication failed');
+      }
+
+      const backendData = await response.json();
       
       const userData: User = {
-        email: payload.email,
-        name: payload.name,
-        picture: payload.picture,
+        email: backendData.email,
+        name: backendData.name,
+        picture: backendData.picture,
       };
 
       console.log('Login successful:', userData);
       setUser(userData);
       localStorage.setItem('manager_user', JSON.stringify(userData));
       localStorage.setItem('manager_token', credential);
-      
-      // Optional: Try to verify with backend but don't fail if it doesn't work
-      try {
-        const apiUrl = import.meta.env.PROD 
-          ? '/api' 
-          : 'https://project3team12-two.vercel.app/api';
-        await fetch(`${apiUrl}/auth?action=google`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ credential }),
-        });
-      } catch (backendError) {
-        console.warn('Backend verification failed, but continuing with login:', backendError);
-      }
     } catch (error) {
       console.error('Login error:', error);
+      // Clear any stored data on failed login
+      localStorage.removeItem('manager_user');
+      localStorage.removeItem('manager_token');
       throw error;
     } finally {
       setIsLoading(false);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { menuApi } from '../services/api';
+import { menuApi, managersApi, Manager } from '../services/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -35,10 +35,20 @@ export function ManagerDashboard() {
     category: 'milk-tea',
   });
 
+  // User management state
+  const [managers, setManagers] = useState<Manager[]>([]);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [userError, setUserError] = useState<string | null>(null);
+  const [userSuccess, setUserSuccess] = useState<string | null>(null);
+  const [isLoadingManagers, setIsLoadingManagers] = useState(false);
+
   useEffect(() => {
-    console.log('ManagerDashboard mounted, loading menu items...');
+    console.log('ManagerDashboard mounted, loading menu items and managers...');
     loadMenuItems().catch(err => {
       console.error('Failed to load menu items in useEffect:', err);
+    });
+    loadManagers().catch(err => {
+      console.error('Failed to load managers in useEffect:', err);
     });
   }, []);
 
@@ -60,6 +70,22 @@ export function ManagerDashboard() {
       setMenuItems([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadManagers = async () => {
+    try {
+      setIsLoadingManagers(true);
+      setUserError(null);
+      const managerList = await managersApi.getAll();
+      setManagers(managerList);
+      console.log('Managers loaded successfully:', managerList);
+    } catch (err) {
+      console.error('Error loading managers:', err);
+      setUserError('Failed to load managers from server.');
+      setManagers([]);
+    } finally {
+      setIsLoadingManagers(false);
     }
   };
 
@@ -132,6 +158,56 @@ export function ManagerDashboard() {
       image: '',
       category: 'milk-tea',
     });
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUserError(null);
+    setUserSuccess(null);
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUserEmail)) {
+      setUserError('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      // Add manager to the database
+      await managersApi.add(newUserEmail);
+      setUserSuccess(`Manager ${newUserEmail} added successfully!`);
+      setNewUserEmail('');
+      
+      // Reload managers list
+      await loadManagers();
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setUserSuccess(null), 3000);
+    } catch (err: any) {
+      console.error('Error adding manager:', err);
+      if (err.message?.includes('already exists')) {
+        setUserError('This email is already in the system');
+      } else {
+        setUserError('Failed to add manager. Please try again.');
+      }
+    }
+  };
+
+  const handleRemoveUser = async (managerId: number, email: string) => {
+    if (confirm(`Are you sure you want to remove ${email}?`)) {
+      try {
+        await managersApi.delete(managerId);
+        setUserSuccess(`Manager ${email} removed successfully!`);
+        
+        // Reload managers list
+        await loadManagers();
+        
+        setTimeout(() => setUserSuccess(null), 3000);
+      } catch (err: any) {
+        console.error('Error removing manager:', err);
+        setUserError(err.message || 'Failed to remove manager. Please try again.');
+      }
+    }
   };
 
   console.log('ManagerDashboard rendering, user:', user, 'isLoading:', isLoading, 'menuItems:', menuItems.length);
@@ -312,7 +388,7 @@ export function ManagerDashboard() {
         </div>
 
         {/* Statistics */}
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle>Statistics</CardTitle>
             <CardDescription>Overview of menu items</CardDescription>
@@ -340,6 +416,72 @@ export function ManagerDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* User Management Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>User Management</CardTitle>
+            <CardDescription>Add and manage authorized users</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {userError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{userError}</AlertDescription>
+              </Alert>
+            )}
+
+            {userSuccess && (
+              <Alert className="mb-4 bg-green-50 text-green-900 border-green-200">
+                <AlertDescription>{userSuccess}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Add User Form */}
+            <form onSubmit={handleAddUser} className="mb-6">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    placeholder="Enter user email (e.g., user@example.com)"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit">Add User</Button>
+              </div>
+            </form>
+
+            {/* User List */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Authorized Managers ({managers.length})</h3>
+              {isLoadingManagers ? (
+                <p className="text-gray-500 text-sm">Loading managers...</p>
+              ) : managers.length === 0 ? (
+                <p className="text-gray-500 text-sm">No managers added yet. Add your first manager above.</p>
+              ) : (
+                <div className="space-y-2">
+                  {managers.map((manager) => (
+                    <div
+                      key={manager.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md border"
+                    >
+                      <span className="text-sm font-medium">{manager.email}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveUser(manager.id, manager.email)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
     );
@@ -352,3 +494,5 @@ export function ManagerDashboard() {
     );
   }
 }
+
+//change
