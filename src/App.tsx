@@ -19,6 +19,7 @@ type AppMode = 'kiosk' | 'manager';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
+  const [previousScreen, setPreviousScreen] = useState<Screen | null>(null);
   const [appMode, setAppMode] = useState<AppMode>('kiosk');
   const [cart, setCart] = useState<CartItem[]>([]);
 
@@ -71,11 +72,18 @@ export default function App() {
   };
 
   const handleViewCart = () => {
+    // Remember where the user was before opening the cart
+    setPreviousScreen(currentScreen);
     setCurrentScreen('checkout');
   };
 
   const handleBackToMenu = () => {
-    setCurrentScreen('menu');
+    // Navigate back to the actual previous screen if available
+    if (previousScreen && previousScreen !== 'checkout') {
+      setCurrentScreen(previousScreen);
+    } else {
+      setCurrentScreen('menu');
+    }
   };
 
   const handleBackToWelcome = () => {
@@ -85,6 +93,7 @@ export default function App() {
   const handleCompleteOrder = () => {
     setCart([]);
     setCurrentScreen('welcome');
+    setPreviousScreen(null);
   };
 
   const toggleAppMode = () => {
@@ -102,15 +111,17 @@ export default function App() {
         <MagnifierProvider>
           <>
             <Magnifier />
-                  <div className="fixed top-6 left-6 z-50">
-                    <Button
-                    onClick={toggleAppMode}
-                    variant="outline"
-                    className="shadow-lg px-6 py-3"
-                    >
-                {appMode === 'kiosk' ? 'Manager Mode' : 'Kiosk Mode'}
-              </Button>
-            </div>
+            {currentScreen === 'welcome' && (
+              <div className="fixed top-6 left-6 z-50">
+                <Button
+                  onClick={toggleAppMode}
+                  variant="outline"
+                  className="shadow-lg px-6 py-3"
+                >
+                  {appMode === 'kiosk' ? 'Manager Mode' : 'Kiosk Mode'}
+                </Button>
+              </div>
+            )}
 
             {appMode === 'kiosk' ? (
               // Kiosk Mode - Original App

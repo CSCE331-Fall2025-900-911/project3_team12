@@ -88,14 +88,14 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
                   />
                 </div>
               )}
-              <div className={showImages ? "p-4 space-y-2 flex-1 flex flex-col" : "p-3 space-y-1 flex-1 flex flex-col"}>
+              <div className={showImages ? "p-4 space-y-2 flex-1 flex flex-col" : "p-2 space-y-1 flex-1 flex flex-col"}>
                 <div className="flex items-start justify-between">
-                  <h3 className={showImages ? "text-xl" : ""}>{tea.name}</h3>
+                  <h3 className={showImages ? "text-xl" : "text-sm"}>{tea.name}</h3>
                   <Badge variant="secondary" className="ml-2 bg-accent text-accent-foreground">
                     ${tea.basePrice.toFixed(2)}
                   </Badge>
                 </div>
-                {showImages && <p className="text-muted-foreground">{tea.description}</p>}
+                {showImages && <p className="text-muted-foreground text-sm">{tea.description}</p>}
                 <Button
                   className={
                     showImages
