@@ -22,6 +22,7 @@ app.use(cors({
     'http://localhost:3000',
     'https://project3team12.vercel.app',
     'https://project3-team12.vercel.app',
+    'project3team12ayadtest.vercel.app',
     /\.vercel\.app$/
   ],
   credentials: true
