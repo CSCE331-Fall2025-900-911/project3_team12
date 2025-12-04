@@ -328,7 +328,7 @@ export function ManagerDashboard() {
         </div>
 
         <Tabs defaultValue="menu" className="w-full">
-          <div className="flex gap-4 mb-6">
+          <TabsList className="flex gap-4 mb-6 bg-transparent h-auto p-0">
             <TabsTrigger 
               value="menu"
               className="bg-blue-600 text-white hover:bg-blue-700 data-[state=active]:bg-blue-800 data-[state=inactive]:bg-blue-600 px-6 py-3 rounded-md font-medium transition-all shadow-md"
@@ -347,7 +347,7 @@ export function ManagerDashboard() {
             >
               User Management
             </TabsTrigger>
-          </div>
+          </TabsList>
 
           {/* Menu Items Tab */}
           <TabsContent value="menu">
