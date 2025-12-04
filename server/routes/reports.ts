@@ -6,7 +6,12 @@ const router = express.Router();
 // Sales summary
 router.get('/sales', async (req: Request, res: Response) => {
   try {
-    const { start, end } = req.query as { start?: string; end?: string };
+    // Accept either `start`/`end` or `startDate`/`endDate` for compatibility
+    const q = req.query as Record<string, string | undefined>;
+    const start = q.start || q.startDate;
+    const end = q.end || q.endDate;
+
+    console.log('/api/reports/sales params:', { start, end });
 
     let where = '';
     const params: any[] = [];
@@ -35,10 +40,10 @@ router.get('/sales', async (req: Request, res: Response) => {
 // Most popular drinks
 router.get('/popular', async (req: Request, res: Response) => {
   try {
-    // Accept optional start/end query params; default to today
-    const { start, end } = req.query as { start?: string; end?: string };
-    let startTs = start;
-    let endTs = end;
+    // Accept optional start/end query params; default to today. Also accept startDate/endDate fallback.
+    const q = req.query as Record<string, string | undefined>;
+    let startTs = q.start || q.startDate;
+    let endTs = q.end || q.endDate;
     if (!startTs || !endTs) {
       const now = new Date();
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -46,6 +51,7 @@ router.get('/popular', async (req: Request, res: Response) => {
       startTs = startOfDay.toISOString();
       endTs = endOfDay.toISOString();
     }
+    console.log('/api/reports/popular params:', { startTs, endTs });
 
     const result = await query(`
       SELECT 
@@ -71,10 +77,10 @@ router.get('/popular', async (req: Request, res: Response) => {
 // Orders by status
 router.get('/status', async (req: Request, res: Response) => {
   try {
-    // Accept optional start/end query params; default to today
-    const { start, end } = req.query as { start?: string; end?: string };
-    let startTs = start;
-    let endTs = end;
+    // Accept optional start/end query params; default to today. Also accept startDate/endDate fallback.
+    const q = req.query as Record<string, string | undefined>;
+    let startTs = q.start || q.startDate;
+    let endTs = q.end || q.endDate;
     if (!startTs || !endTs) {
       const now = new Date();
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -82,6 +88,8 @@ router.get('/status', async (req: Request, res: Response) => {
       startTs = startOfDay.toISOString();
       endTs = endOfDay.toISOString();
     }
+
+    console.log('/api/reports/status params:', { startTs, endTs });
 
     const result = await query(`
       SELECT 
