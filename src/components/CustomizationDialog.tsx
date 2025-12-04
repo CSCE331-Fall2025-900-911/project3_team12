@@ -14,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Checkbox } from './ui/checkbox';
 import { Separator } from './ui/separator';
 import { useEffect } from 'react';
+import DrinkVisualizer from './DrinkVisualizer';
 
 // Let TypeScript know Google Translate adds a global object
 declare global {
@@ -101,6 +102,11 @@ export function CustomizationDialog({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Visualizer */}
+          <div className="flex justify-center">
+            <DrinkVisualizer tea={tea} customization={customization} />
+          </div>
+
           {/* Size Selection */}
           <div className="space-y-3">
             <Label className="text-lg">Size</Label>
