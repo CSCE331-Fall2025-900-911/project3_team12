@@ -45,8 +45,8 @@ export default function Magnifier() {
 
       document.addEventListener('selectstart', preventSelectRef.current as any);
       document.addEventListener('dragstart', preventDragRef.current as any);
-      // create clone of the app root to render inside the lens
-      const root = document.getElementById('root') || document.body;
+      // create clone of the full document body to include portal-based modals
+      const root = document.body;
       // mark the original lens so we can remove any cloned copy from the clone
       try {
         if (lensRef.current) lensRef.current.setAttribute('data-magnifier-original', 'true');
