@@ -12,6 +12,14 @@ export default function Magnifier() {
   const enabledRef = useRef<boolean>(active);
   const prevEnabledRef = useRef<boolean>(false);
   const longPressTriggeredRef = useRef<boolean>(false);
+  // handler refs so we can remove listeners reliably
+  const handleMoveRef = useRef<((e: PointerEvent) => void) | null>(null);
+  const preventSelectRef = useRef<((e: Event) => void) | null>(null);
+  const preventDragRef = useRef<((e: DragEvent) => void) | null>(null);
+  const prevUserSelectRef = useRef<string | null>(null);
+  const prevWebkitUserSelectRef = useRef<string | null>(null);
+  const prevMsUserSelectRef = useRef<string | null>(null);
+  const preventContextRef = useRef<((e: Event) => void) | null>(null);
 
   useEffect(() => {
     function handleMove(e: PointerEvent) {
@@ -19,7 +27,24 @@ export default function Magnifier() {
     }
 
     if (active) {
-      document.addEventListener('pointermove', handleMove, { passive: true } as any);
+      // store handler refs so removal uses same reference
+      handleMoveRef.current = handleMove;
+      document.addEventListener('pointermove', handleMoveRef.current as any, { passive: true } as any);
+
+      // Disable text selection and image dragging while magnifier is active
+      prevUserSelectRef.current = document.body.style.userSelect || '';
+      prevWebkitUserSelectRef.current = (document.body.style as any).webkitUserSelect || '';
+      prevMsUserSelectRef.current = (document.body.style as any).msUserSelect || '';
+
+      document.body.style.userSelect = 'none';
+      (document.body.style as any).webkitUserSelect = 'none';
+      (document.body.style as any).msUserSelect = 'none';
+
+      preventSelectRef.current = (e: Event) => { e.preventDefault(); };
+      preventDragRef.current = (e: DragEvent) => { e.preventDefault(); };
+
+      document.addEventListener('selectstart', preventSelectRef.current as any);
+      document.addEventListener('dragstart', preventDragRef.current as any);
       // create clone of the app root to render inside the lens
       const root = document.getElementById('root') || document.body;
       const clone = (root.cloneNode(true) as HTMLElement) || null;
@@ -49,7 +74,25 @@ export default function Magnifier() {
     }
 
     return () => {
-      document.removeEventListener('pointermove', handleMove as any);
+      // remove pointermove
+      try {
+        if (handleMoveRef.current) document.removeEventListener('pointermove', handleMoveRef.current as any);
+      } catch {}
+
+      // restore selection/drag behavior
+      try {
+        if (preventSelectRef.current) document.removeEventListener('selectstart', preventSelectRef.current as any);
+      } catch {}
+      try {
+        if (preventDragRef.current) document.removeEventListener('dragstart', preventDragRef.current as any);
+      } catch {}
+
+      try {
+        if (prevUserSelectRef.current !== null) document.body.style.userSelect = prevUserSelectRef.current;
+        if (prevWebkitUserSelectRef.current !== null) (document.body.style as any).webkitUserSelect = prevWebkitUserSelectRef.current;
+        if (prevMsUserSelectRef.current !== null) (document.body.style as any).msUserSelect = prevMsUserSelectRef.current;
+      } catch {}
+
       // cleanup clone
       if (cloneRef.current && cloneRef.current.parentElement) {
         cloneRef.current.parentElement.removeChild(cloneRef.current);
@@ -91,12 +134,19 @@ export default function Magnifier() {
         }
         setPos({ x, y });
       }, 350);
+      // prevent context menu during the potential long-press
+      preventContextRef.current = (ev: Event) => ev.preventDefault();
+      document.addEventListener('contextmenu', preventContextRef.current as any, true);
     }
 
     function onPointerUp() {
       // clear timer and, if we enabled magnifier via long-press, restore
       // previous state (typically disable it).
       clearTimer();
+      // remove contextmenu prevention added during pointerdown
+      try {
+        if (preventContextRef.current) document.removeEventListener('contextmenu', preventContextRef.current as any, true);
+      } catch {}
       if (longPressTriggeredRef.current) {
         if (!prevEnabledRef.current) setEnabled(false);
         longPressTriggeredRef.current = false;
