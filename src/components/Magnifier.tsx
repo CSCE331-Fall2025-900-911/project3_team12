@@ -131,6 +131,7 @@ export default function Magnifier() {
         timer = null;
       }
     }
+    //test
 
     function onPointerDown(e: PointerEvent) {
       // Start long-press timer. If it fires, enable magnifier and mark it as
