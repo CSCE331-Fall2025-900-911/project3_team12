@@ -65,18 +65,12 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
       </div>
 
       {/* Menu Grid */}
-      <div className="max-w-7xl mx-auto px-8 py-12">
-        <div
-          className={
-            showImages
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "grid grid-cols-4 gap-4"
-          }
-        >
+      <div className={showImages ? "max-w-7xl mx-auto px-8 py-12" : "w-full px-8 py-12"}>
+        <div className={showImages ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "grid grid-cols-4 gap-4 w-full"}>
           {bubbleTeaMenu.map((tea) => (
             <Card
               key={tea.id}
-              className="h-full overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col"
+              className={showImages ? "h-full overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col" : "overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col"}
               onClick={() => handleSelectTea(tea)}
             >
               {showImages && (
