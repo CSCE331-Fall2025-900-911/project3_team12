@@ -70,7 +70,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
           className={
             showImages
               ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+              : "grid grid-cols-4 gap-4"
           }
         >
           {bubbleTeaMenu.map((tea) => (
@@ -88,20 +88,16 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
                   />
                 </div>
               )}
-              <div className={showImages ? "p-4 space-y-2 flex-1 flex flex-col" : "p-2 space-y-1 flex-1 flex flex-col"}>
+              <div className={showImages ? "p-4 space-y-2 flex-1 flex flex-col" : "p-3 space-y-2 flex-1 flex flex-col"}>
                 <div className="flex items-start justify-between">
-                  <h3 className={showImages ? "text-xl" : "text-sm"}>{tea.name}</h3>
+                  <h3 className={showImages ? "text-xl" : "text-base font-semibold"}>{tea.name}</h3>
                   <Badge variant="secondary" className="ml-2 bg-accent text-accent-foreground">
                     ${tea.basePrice.toFixed(2)}
                   </Badge>
                 </div>
-                {showImages && <p className="text-muted-foreground text-sm">{tea.description}</p>}
+                <p className="text-muted-foreground text-sm">{tea.description}</p>
                 <Button
-                  className={
-                    showImages
-                      ? "w-full bg-primary hover:bg-primary/90"
-                      : "w-full bg-primary hover:bg-primary/90 py-1 h-8"
-                  }
+                  className="w-full bg-primary hover:bg-primary/90 mt-auto"
                 >
                   {showImages ? "Customize & Add" : "Add"}
                 </Button>
