@@ -6,11 +6,23 @@ DROP TABLE IF EXISTS orders CASCADE;
 DROP TABLE IF EXISTS toppings CASCADE;
 DROP TABLE IF EXISTS menu_items CASCADE;
 DROP TABLE IF EXISTS managers CASCADE;
+DROP TABLE IF EXISTS inventory CASCADE;
 
 -- Create managers table
 CREATE TABLE managers (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create inventory table
+CREATE TABLE inventory (
+    id SERIAL PRIMARY KEY,
+    ingredient_name VARCHAR(255) NOT NULL UNIQUE,
+    quantity DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    unit VARCHAR(50) NOT NULL DEFAULT 'units',
+    min_quantity DECIMAL(10, 2) DEFAULT 10,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -86,12 +98,38 @@ INSERT INTO toppings (name, price) VALUES
 -- Insert default manager (you can change this email)
 INSERT INTO managers (email) VALUES ('ayad.r.masud@gmail.com');
 
+-- Insert inventory items
+INSERT INTO inventory (ingredient_name, quantity, unit, min_quantity) VALUES
+('Water', 1000.00, 'liters', 100.00),
+('Milk', 500.00, 'liters', 50.00),
+('Sugar', 200.00, 'kg', 20.00),
+('Tea', 100.00, 'kg', 10.00),
+('Black Tea', 80.00, 'kg', 10.00),
+('Oolong Tea', 80.00, 'kg', 10.00),
+('Green Tea', 80.00, 'kg', 10.00),
+('Coffee', 50.00, 'kg', 5.00),
+('Cream', 100.00, 'liters', 10.00),
+('Coconut', 60.00, 'kg', 5.00),
+('Ube Powder', 40.00, 'kg', 5.00),
+('Protein Powder', 50.00, 'kg', 5.00),
+('Winter Melon', 60.00, 'kg', 10.00),
+('Passionfruit', 70.00, 'kg', 10.00),
+('Mango', 80.00, 'kg', 10.00),
+('Strawberry Lemonade', 60.00, 'liters', 10.00),
+('Strawberry', 75.00, 'kg', 10.00),
+('Peach', 70.00, 'kg', 10.00),
+('Matcha', 30.00, 'kg', 5.00),
+('Boba', 150.00, 'kg', 15.00),
+('Lychee Jelly', 100.00, 'kg', 10.00),
+('Pudding', 100.00, 'kg', 10.00);
+
 -- Create indexes for better query performance
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_orders_created_at ON orders(created_at);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_menu_items_category ON menu_items(category);
 CREATE INDEX idx_managers_email ON managers(email);
+CREATE INDEX idx_inventory_ingredient ON inventory(ingredient_name);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -104,6 +142,9 @@ $$ language 'plpgsql';
 
 -- Add triggers to update updated_at column
 CREATE TRIGGER update_managers_updated_at BEFORE UPDATE ON managers
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_inventory_updated_at BEFORE UPDATE ON inventory
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON menu_items
