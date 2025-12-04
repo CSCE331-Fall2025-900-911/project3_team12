@@ -5,6 +5,15 @@ DROP TABLE IF EXISTS order_items CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;
 DROP TABLE IF EXISTS toppings CASCADE;
 DROP TABLE IF EXISTS menu_items CASCADE;
+DROP TABLE IF EXISTS managers CASCADE;
+
+-- Create managers table
+CREATE TABLE managers (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Create menu_items table
 CREATE TABLE menu_items (
@@ -74,11 +83,15 @@ INSERT INTO toppings (name, price) VALUES
 ('Lychee Jelly', 0.75),
 ('Pudding', 0.85);
 
+-- Insert default manager (you can change this email)
+INSERT INTO managers (email) VALUES ('ayad.r.masud@gmail.com');
+
 -- Create indexes for better query performance
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_orders_created_at ON orders(created_at);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_menu_items_category ON menu_items(category);
+CREATE INDEX idx_managers_email ON managers(email);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -90,6 +103,9 @@ END;
 $$ language 'plpgsql';
 
 -- Add triggers to update updated_at column
+CREATE TRIGGER update_managers_updated_at BEFORE UPDATE ON managers
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON menu_items
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
