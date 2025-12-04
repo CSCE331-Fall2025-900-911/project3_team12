@@ -9,20 +9,60 @@ export default function Magnifier() {
   const [pos, setPos] = React.useState({ x: 0, y: 0 });
   const lensRef = useRef<HTMLDivElement | null>(null);
   const cloneRef = useRef<HTMLElement | null>(null);
+  const enabledRef = useRef<boolean>(active);
+  const prevEnabledRef = useRef<boolean>(false);
+  const longPressTriggeredRef = useRef<boolean>(false);
+  // handler refs so we can remove listeners reliably
+  const handleMoveRef = useRef<((e: PointerEvent) => void) | null>(null);
+  const preventSelectRef = useRef<((e: Event) => void) | null>(null);
+  const preventDragRef = useRef<((e: DragEvent) => void) | null>(null);
+  const prevUserSelectRef = useRef<string | null>(null);
+  const prevWebkitUserSelectRef = useRef<string | null>(null);
+  const prevMsUserSelectRef = useRef<string | null>(null);
+  const preventContextRef = useRef<((e: Event) => void) | null>(null);
 
   useEffect(() => {
-    function handleMove(e: MouseEvent) {
+    function handleMove(e: PointerEvent) {
       setPos({ x: e.clientX, y: e.clientY });
     }
 
     if (active) {
-      document.addEventListener('mousemove', handleMove);
-      // create clone of the app root to render inside the lens
-      const root = document.getElementById('root') || document.body;
+      // store handler refs so removal uses same reference
+      handleMoveRef.current = handleMove;
+      document.addEventListener('pointermove', handleMoveRef.current as any, { passive: true } as any);
+
+      // Disable text selection and image dragging while magnifier is active
+      prevUserSelectRef.current = document.body.style.userSelect || '';
+      prevWebkitUserSelectRef.current = (document.body.style as any).webkitUserSelect || '';
+      prevMsUserSelectRef.current = (document.body.style as any).msUserSelect || '';
+
+      document.body.style.userSelect = 'none';
+      (document.body.style as any).webkitUserSelect = 'none';
+      (document.body.style as any).msUserSelect = 'none';
+
+      preventSelectRef.current = (e: Event) => { e.preventDefault(); };
+      preventDragRef.current = (e: DragEvent) => { e.preventDefault(); };
+
+      document.addEventListener('selectstart', preventSelectRef.current as any);
+      document.addEventListener('dragstart', preventDragRef.current as any);
+      // create clone of the full document body to include portal-based modals
+      const root = document.body;
+      // mark the original lens so we can remove any cloned copy from the clone
+      try {
+        if (lensRef.current) lensRef.current.setAttribute('data-magnifier-original', 'true');
+      } catch {}
       const clone = (root.cloneNode(true) as HTMLElement) || null;
       if (clone) {
         // remove ids that might conflict
         clone.removeAttribute('id');
+        // remove any cloned copy of the lens (the clone will include the
+        // original lens element, which would render inside the magnifier
+        // and cause the white circular artifact). Remove elements that
+        // were marked on the original before cloning.
+        try {
+          const clonedOriginals = clone.querySelectorAll('[data-magnifier-original]');
+          clonedOriginals.forEach((n) => n.remove());
+        } catch {}
         // mark clone for identification
         clone.setAttribute('data-magnifier-clone', 'true');
         clone.style.pointerEvents = 'none';
@@ -42,11 +82,31 @@ export default function Magnifier() {
         // clear previous
         lensRef.current.innerHTML = '';
         lensRef.current.appendChild(cloneRef.current);
+        // remove the temporary marker from the real lens element
+        try { if (lensRef.current) lensRef.current.removeAttribute('data-magnifier-original'); } catch {}
       }
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMove);
+      // remove pointermove
+      try {
+        if (handleMoveRef.current) document.removeEventListener('pointermove', handleMoveRef.current as any);
+      } catch {}
+
+      // restore selection/drag behavior
+      try {
+        if (preventSelectRef.current) document.removeEventListener('selectstart', preventSelectRef.current as any);
+      } catch {}
+      try {
+        if (preventDragRef.current) document.removeEventListener('dragstart', preventDragRef.current as any);
+      } catch {}
+
+      try {
+        if (prevUserSelectRef.current !== null) document.body.style.userSelect = prevUserSelectRef.current;
+        if (prevWebkitUserSelectRef.current !== null) (document.body.style as any).webkitUserSelect = prevWebkitUserSelectRef.current;
+        if (prevMsUserSelectRef.current !== null) (document.body.style as any).msUserSelect = prevMsUserSelectRef.current;
+      } catch {}
+
       // cleanup clone
       if (cloneRef.current && cloneRef.current.parentElement) {
         cloneRef.current.parentElement.removeChild(cloneRef.current);
@@ -54,6 +114,71 @@ export default function Magnifier() {
       cloneRef.current = null;
     };
   }, [active]);
+
+  // keep a ref of the current enabled state so long-press handlers can read it
+  useEffect(() => {
+    enabledRef.current = active;
+  }, [active]);
+
+  // Long-press detection: enable magnifier while pressing (transient) if it wasn't
+  // already enabled. Restore previous enabled state on release.
+  useEffect(() => {
+    let timer: number | null = null;
+
+    function clearTimer() {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+    }
+    //test
+
+    function onPointerDown(e: PointerEvent) {
+      // Start long-press timer. If it fires, enable magnifier and mark it as
+      // triggered by long-press. Record pointer position immediately so lens
+      // appears near the touch point.
+      const x = e.clientX;
+      const y = e.clientY;
+      timer = window.setTimeout(() => {
+        prevEnabledRef.current = enabledRef.current;
+        if (!enabledRef.current) {
+          longPressTriggeredRef.current = true;
+          setEnabled(true);
+        } else {
+          longPressTriggeredRef.current = false;
+        }
+        setPos({ x, y });
+      }, 350);
+      // prevent context menu during the potential long-press
+      preventContextRef.current = (ev: Event) => ev.preventDefault();
+      document.addEventListener('contextmenu', preventContextRef.current as any, true);
+    }
+
+    function onPointerUp() {
+      // clear timer and, if we enabled magnifier via long-press, restore
+      // previous state (typically disable it).
+      clearTimer();
+      // remove contextmenu prevention added during pointerdown
+      try {
+        if (preventContextRef.current) document.removeEventListener('contextmenu', preventContextRef.current as any, true);
+      } catch {}
+      if (longPressTriggeredRef.current) {
+        if (!prevEnabledRef.current) setEnabled(false);
+        longPressTriggeredRef.current = false;
+      }
+    }
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
+
+    return () => {
+      clearTimer();
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerUp);
+    };
+  }, [setEnabled]);
 
   useEffect(() => {
     // update lens transform / position when mouse moves
