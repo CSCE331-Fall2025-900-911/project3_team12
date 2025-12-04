@@ -95,20 +95,18 @@ export function CustomizationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">{tea.name}</DialogTitle>
           <DialogDescription>{tea.description}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Visualizer */}
-          <div className="flex justify-center">
-            <DrinkVisualizer tea={tea} customization={customization} />
-          </div>
-
-          {/* Size Selection */}
-          <div className="space-y-3">
+        <div className="py-4">
+          <div className="flex flex-col md:flex-row md:items-start gap-6">
+            {/* Left: form controls */}
+            <div className="flex-1 space-y-6">
+              {/* Size Selection */}
+              <div className="space-y-3">
             <Label className="text-lg">Size</Label>
             <RadioGroup
               value={customization.size}
@@ -135,72 +133,79 @@ export function CustomizationDialog({
                 </Label>
               </div>
             </RadioGroup>
-          </div>
+            </div>
 
-          <Separator />
-
-          {/* Sugar Level */}
-          <div className="space-y-3">
-            <Label className="text-lg">Sugar Level</Label>
-            <RadioGroup
-              value={customization.sugarLevel}
-              onValueChange={(value: Customization['sugarLevel']) =>
-                setCustomization((prev) => ({ ...prev, sugarLevel: value }))
-              }
-            >
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
-                <RadioGroupItem value="no-sugar" id="no-sugar" />
-                <Label htmlFor="no-sugar" className="flex-1 cursor-pointer">
-                  No Sugar
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
-                <RadioGroupItem value="half-sugar" id="half-sugar" />
-                <Label htmlFor="half-sugar" className="flex-1 cursor-pointer">
-                  Half Sugar
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
-                <RadioGroupItem value="normal" id="normal" />
-                <Label htmlFor="normal" className="flex-1 cursor-pointer">
-                  Normal
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <Separator />
-
-          {/* Toppings */}
-          <div className="space-y-3">
-            <Label className="text-lg">Toppings (Select multiple)</Label>
-            <div className="space-y-2">
-              {availableToppings.map((topping) => (
-                <div
-                  key={topping.id}
-                  className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50"
-                >
-                  <Checkbox
-                    id={topping.id}
-                    checked={customization.toppings.includes(topping.id)}
-                    onCheckedChange={() => handleToggleTopping(topping.id)}
-                  />
-                  <Label
-                    htmlFor={topping.id}
-                    className="flex-1 cursor-pointer flex justify-between"
-                  >
-                    <span>{topping.name}</span>
-                    <span className="text-gray-600">+${topping.price.toFixed(2)}</span>
+            {/* Sugar Level */}
+            <div className="space-y-3">
+              <Label className="text-lg">Sugar Level</Label>
+              <RadioGroup
+                value={customization.sugarLevel}
+                onValueChange={(value: Customization['sugarLevel']) =>
+                  setCustomization((prev) => ({ ...prev, sugarLevel: value }))
+                }
+              >
+                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                  <RadioGroupItem value="no-sugar" id="no-sugar" />
+                  <Label htmlFor="no-sugar" className="flex-1 cursor-pointer">
+                    No Sugar
                   </Label>
                 </div>
-              ))}
+                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                  <RadioGroupItem value="half-sugar" id="half-sugar" />
+                  <Label htmlFor="half-sugar" className="flex-1 cursor-pointer">
+                    Half Sugar
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                  <RadioGroupItem value="normal" id="normal" />
+                  <Label htmlFor="normal" className="flex-1 cursor-pointer">
+                    Normal
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <Separator />
+
+            {/* Toppings */}
+            <div className="space-y-3">
+              <Label className="text-lg">Toppings (Select multiple)</Label>
+              <div className="space-y-2">
+                {availableToppings.map((topping) => (
+                  <div
+                    key={topping.id}
+                    className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50"
+                  >
+                    <Checkbox
+                      id={topping.id}
+                      checked={customization.toppings.includes(topping.id)}
+                      onCheckedChange={() => handleToggleTopping(topping.id)}
+                    />
+                    <Label
+                      htmlFor={topping.id}
+                      className="flex-1 cursor-pointer flex justify-between"
+                    >
+                      <span>{topping.name}</span>
+                      <span className="text-gray-600">+${topping.price.toFixed(2)}</span>
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* close left column */}
+            </div>
+
+            {/* Right: visualizer (fixed width on md+) */}
+            <div className="w-full md:w-80 flex justify-center md:justify-end items-start">
+              <div className="bg-white p-2 rounded-md shadow-sm">
+                <DrinkVisualizer tea={tea} customization={customization} />
+              </div>
             </div>
           </div>
         </div>
 
-        <Separator />
 
-        {/* Footer */}
         <div className="flex items-center justify-between pt-4">
           <div>
             <p className="text-sm text-muted-foreground">Total</p>
