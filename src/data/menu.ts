@@ -6,7 +6,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Original Milk Tea',
     description: 'Classic milk tea blend',
     basePrice: 5.25,
-    image: 'https://images.unsplash.com/photo-1670468642364-6cacadfb7bb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidWJibGUlMjB0ZWElMjBkcmlua3xlbnwxfHx8fDE3NjEyMzM2NDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://assets.epicurious.com/photos/5953ca064919e41593325d97/1:1/w_1920,c_limit/bubble_tea_recipe_062817.jpg',
     category: 'milk-tea',
   },
   {
@@ -14,7 +14,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Black Milk Tea',
     description: 'Traditional black tea with creamy milk',
     basePrice: 5.25,
-    image: 'https://images.unsplash.com/photo-1707560664096-12857c4ddb91?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaWxrJTIwdGVhJTIwYmV2ZXJhZ2V8ZW58MXx8fHwxNzYxMjExNDIzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://www.theflavorbender.com/wp-content/uploads/2020/06/Bubble-Milk-Tea-7511-1367x2048.jpg',
     category: 'milk-tea',
   },
   {
@@ -22,7 +22,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Oolong Milk Tea',
     description: 'Smooth oolong tea with milk',
     basePrice: 5.25,
-    image: 'https://images.unsplash.com/photo-1670468642364-6cacadfb7bb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidWJibGUlMjB0ZWElMjBkcmlua3xlbnwxfHx8fDE3NjEyMzM2NDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://images.squarespace-cdn.com/content/v1/62bf67c4d370c33d137d8f5c/b69b414d-3d6a-43a8-8a66-75df4e86d286/dong+ding+oolong+blog+banner+2.jpg',
     category: 'milk-tea',
   },
   {
@@ -30,7 +30,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Green Milk Tea',
     description: 'Refreshing green tea with milk',
     basePrice: 5.25,
-    image: 'https://images.unsplash.com/photo-1722478347147-7238a01b78d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBncmVlbiUyMHRlYXxlbnwxfHx8fDE3NjEyMzM1NzZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://thaicaliente.com/wp-content/uploads/2024/08/thai-green-tea-feature.jpg',
     category: 'milk-tea',
   },
   {
@@ -38,7 +38,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Capuccino Milk Tea',
     description: 'Coffee-infused milk tea blend',
     basePrice: 6.25,
-    image: 'https://images.unsplash.com/photo-1565600587185-6883f2725f73?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpY2VkJTIwbGF0dGUlMjBjb2ZmZWV8ZW58MXx8fHwxNzYxMjkzMTA5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://www.bubbletea.org/cdn/shop/products/cappuccino_BubbleTeaORG_1200x.jpg?v=1651725462',
     category: 'milk-tea',
   },
   {
@@ -46,7 +46,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Coconut Milk Tea',
     description: 'Tropical coconut with milk tea',
     basePrice: 7.25,
-    image: 'https://images.unsplash.com/photo-1597406138443-dfaf216f4efa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxib2JhJTIwdGVhJTIwY29sb3JmdWx8ZW58MXx8fHwxNzYxMjI5NjUyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://www.souschef.co.uk/cdn/shop/articles/557539754042_f1b1ed7b-f9b8-4d9f-8fa4-0b2535788429_1080x.png?v=1761736933',
     category: 'milk-tea',
   },
   {
@@ -54,7 +54,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Ube Milk Tea',
     description: 'Purple yam sweetness with milk tea',
     basePrice: 7.25,
-    image: 'https://images.unsplash.com/photo-1635687941366-f68b26aabdaf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1YmUlMjBwdXJwbGUlMjBtaWxrJTIwdGVhfGVufDF8fHx8MTc2MTMxNTM0Mnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://maesmenu.com/wp-content/uploads/2023/06/ube-boba-9-500x500.jpg',
     category: 'milk-tea',
   },
   {
@@ -62,7 +62,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Protein Shake Milk Tea',
     description: 'Energizing protein-infused milk tea',
     basePrice: 9.75,
-    image: 'https://images.unsplash.com/photo-1622485831138-b6891b568a97?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm90ZWluJTIwc2hha2UlMjBkcmlua3xlbnwxfHx8fDE3NjEyMzExNzN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://www.momontimeout.com/wp-content/uploads/2013/10/coffee-protein-shake.jpg',
     category: 'milk-tea',
   },
   {
@@ -70,7 +70,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Ice Blend Latte',
     description: 'Smooth blended iced latte',
     basePrice: 6.25,
-    image: 'https://images.unsplash.com/photo-1565600587185-6883f2725f73?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpY2VkJTIwbGF0dGUlMjBjb2ZmZWV8ZW58MXx8fHwxNzYxMjkzMTA5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://theicedcoffee.com/wp-content/uploads/2025/05/p93-3.webp',
     category: 'specialty',
   },
   {
@@ -78,7 +78,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Winter Melon Green Tea',
     description: 'Sweet winter melon with green tea',
     basePrice: 8.25,
-    image: 'https://images.unsplash.com/photo-1722478347147-7238a01b78d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBncmVlbiUyMHRlYXxlbnwxfHx8fDE3NjEyMzM1NzZ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://delightfulplate.com/wp-content/uploads/2021/07/Winter-Melon-Tea-Tra-Bi-Dao.jpg',
     category: 'fruit-tea',
   },
   {
@@ -86,7 +86,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Passionfruit Green Tea',
     description: 'Tangy passionfruit with green tea',
     basePrice: 7.25,
-    image: 'https://images.unsplash.com/photo-1717615720953-300770cd5831?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcnVpdCUyMHRlYSUyMGRyaW5rfGVufDF8fHx8MTc2MTIzMzU3Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://vintagekitchennotes.com/wp-content/uploads/2023/07/Tall-glasses-of-passionfruit-tea.jpeg',
     category: 'fruit-tea',
   },
   {
@@ -94,7 +94,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Mango Green Tea',
     description: 'Fresh mango with green tea',
     basePrice: 3.25,
-    image: 'https://images.unsplash.com/photo-1717615720953-300770cd5831?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcnVpdCUyMHRlYSUyMGRyaW5rfGVufDF8fHx8MTc2MTIzMzU3Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://takestwoeggs.com/wp-content/uploads/2021/10/Mango-Green-Tea-Takestwoeggs-sq.jpg',
     category: 'fruit-tea',
   },
   {
@@ -110,7 +110,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Strawberry Matcha',
     description: 'Strawberry paired with premium matcha',
     basePrice: 7.25,
-    image: 'https://images.unsplash.com/photo-1573500883698-e3ef47a95feb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzdHJhd2JlcnJ5JTIwZHJpbmslMjBsZW1vbmFkZXxlbnwxfHx8fDE3NjEzMTUzNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://www.acozykitchen.com/wp-content/uploads/2025/03/StrawberryMatchaLatte-1.jpg',
     category: 'specialty',
   },
   {
@@ -118,7 +118,7 @@ export const bubbleTeaMenu: BubbleTea[] = [
     name: 'Peach Oolong Tea',
     description: 'Juicy peach with smooth oolong',
     basePrice: 7.25,
-    image: 'https://images.unsplash.com/photo-1717615720953-300770cd5831?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcnVpdCUyMHRlYSUyMGRyaW5rfGVufDF8fHx8MTc2MTIzMzU3Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+    image: 'https://www.dessertfortwo.com/wp-content/uploads/2012/04/peach-iced-tea-3.jpg',
     category: 'fruit-tea',
   },
   {
