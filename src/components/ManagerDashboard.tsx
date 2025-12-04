@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { menuApi, managersApi, Manager, inventoryApi, InventoryItem } from '../services/api';
+import { menuApi, managersApi, Manager, inventoryApi, InventoryItem, InventoryUsageReport } from '../services/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -56,6 +56,13 @@ export function ManagerDashboard() {
     unit: 'kg',
     min_quantity: '10',
   });
+
+  // Reports state
+  const [report, setReport] = useState<InventoryUsageReport | null>(null);
+  const [isLoadingReport, setIsLoadingReport] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     console.log('ManagerDashboard mounted, loading data...');
@@ -315,6 +322,34 @@ export function ManagerDashboard() {
     });
   };
 
+  // Reports functions
+  const handleGenerateReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReportError(null);
+    setReport(null);
+
+    if (!startDate || !endDate) {
+      setReportError('Please select both start and end dates');
+      return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+      setReportError('Start date must be before end date');
+      return;
+    }
+
+    try {
+      setIsLoadingReport(true);
+      const reportData = await inventoryApi.getUsageReport(startDate, endDate);
+      setReport(reportData);
+    } catch (err: any) {
+      console.error('Error generating report:', err);
+      setReportError(err.message || 'Failed to generate report');
+    } finally {
+      setIsLoadingReport(false);
+    }
+  };
+
   console.log('ManagerDashboard rendering, user:', user, 'isLoading:', isLoading, 'menuItems:', menuItems.length);
 
   try {
@@ -340,6 +375,12 @@ export function ManagerDashboard() {
               className="!bg-transparent !text-blue-800 hover:!bg-blue-50 data-[state=active]:!bg-blue-100 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-2 !border-blue-600"
             >
               Inventory
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reports"
+              className="!bg-transparent !text-blue-800 hover:!bg-blue-50 data-[state=active]:!bg-blue-100 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-2 !border-blue-600"
+            >
+              Reports
             </TabsTrigger>
             <TabsTrigger 
               value="users"
@@ -716,6 +757,182 @@ export function ManagerDashboard() {
                 </Card>
               )}
             </div>
+          </TabsContent>
+
+          {/* Reports Tab */}
+          <TabsContent value="reports">
+            {reportError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{reportError}</AlertDescription>
+              </Alert>
+            )}
+
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Inventory Usage Report</CardTitle>
+                <CardDescription>Generate reports on inventory usage between selected dates</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleGenerateReport} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="startDate">Start Date</Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="endDate">End Date</Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <Button type="submit" disabled={isLoadingReport}>
+                    {isLoadingReport ? 'Generating Report...' : 'Generate Report'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Report Results */}
+            {report && (
+              <>
+                {/* Summary Card */}
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>Report Summary</CardTitle>
+                    <CardDescription>
+                      {new Date(report.dateRange.startDate).toLocaleDateString()} - {new Date(report.dateRange.endDate).toLocaleDateString()}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4">
+                      {report.reportType === 'detailed' ? (
+                        <>
+                          <div className="text-center p-4 bg-blue-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Items Used</p>
+                            <p className="text-3xl font-bold text-blue-800">{report.summary.itemsUsed || 0}</p>
+                          </div>
+                          <div className="text-center p-4 bg-green-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Total Cost</p>
+                            <p className="text-3xl font-bold text-green-800">${(report.summary.totalCost || 0).toFixed(2)}</p>
+                          </div>
+                          <div className="text-center p-4 bg-purple-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Total Units Used</p>
+                            <p className="text-3xl font-bold text-purple-800">{(report.summary.totalUnitsUsed || 0).toFixed(2)}</p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-center p-4 bg-blue-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Total Orders</p>
+                            <p className="text-3xl font-bold text-blue-800">{report.summary.totalOrders || 0}</p>
+                          </div>
+                          <div className="text-center p-4 bg-green-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+                            <p className="text-3xl font-bold text-green-800">${(report.summary.totalRevenue || 0).toFixed(2)}</p>
+                          </div>
+                          <div className="col-span-1 flex items-center justify-center">
+                            <Alert className="bg-yellow-50 border-yellow-200">
+                              <AlertDescription className="text-sm">{report.summary.message}</AlertDescription>
+                            </Alert>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Detailed Items Table */}
+                {report.reportType === 'detailed' && report.items && report.items.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Detailed Usage Breakdown</CardTitle>
+                      <CardDescription>Item-by-item inventory usage details</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50 border-b">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Used</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Unit Cost</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage Count</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {report.items.map((item, index) => (
+                              <tr key={index} className={item.totalUsed > 0 ? '' : 'opacity-50'}>
+                                <td className="px-6 py-4 whitespace-nowrap font-medium">{item.ingredientName}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{item.totalUsed.toFixed(2)} {item.unit}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">${item.avgUnitCost.toFixed(2)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap font-semibold">${item.totalCost.toFixed(2)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{item.usageCount}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Current Inventory Snapshot (for basic reports) */}
+                {report.reportType === 'basic' && report.currentInventory && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Current Inventory Snapshot</CardTitle>
+                      <CardDescription>Current inventory levels at time of report</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50 border-b">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Quantity</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min. Quantity</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {report.currentInventory.map((item) => (
+                              <tr key={item.id}>
+                                <td className="px-6 py-4 whitespace-nowrap font-medium">{item.ingredient_name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{item.quantity} {item.unit}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{item.min_quantity} {item.unit}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {item.quantity <= item.min_quantity ? (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                      Low Stock
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                      In Stock
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
           </TabsContent>
 
           {/* User Management Tab */}
