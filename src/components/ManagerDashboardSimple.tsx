@@ -1,3 +1,5 @@
+//THIS IS A TEST COMPONENT FOR MANAGER DASHBOARD - SIMPLE VERSION
+
 import { useAuth } from '../contexts/AuthContext';
 import { ManagerHeader } from './ManagerHeader';
 

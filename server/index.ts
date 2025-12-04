@@ -9,6 +9,7 @@ import menuRoutes from './routes/menu';
 import orderRoutes from './routes/orders';
 import authRoutes from './routes/auth';
 import managersRoutes from './routes/managers';
+import reportsRoutes from './routes/reports';
 
 dotenv.config();
 
@@ -77,6 +78,7 @@ app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/managers', managersRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {
