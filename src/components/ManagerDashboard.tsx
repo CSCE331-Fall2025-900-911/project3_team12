@@ -40,6 +40,8 @@ export function ManagerDashboard() {
   // Report timestamps for X/Z reports
   const [popularReportTime, setPopularReportTime] = useState<string | null>(null);
   const [statusReportTime, setStatusReportTime] = useState<string | null>(null);
+  // Which report is currently shown: 'sales' | 'popular' | 'status' | null
+  const [activeReport, setActiveReport] = useState<'sales' | 'popular' | 'status' | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -421,6 +423,10 @@ export function ManagerDashboard() {
                     data = await reportsApi.getSalesSummary();
                   }
                   setSalesReport(data);
+                  // show only sales
+                  setActiveReport('sales');
+                  setPopularReport(null);
+                  setStatusReport(null);
                 } catch (err: any) {
                   console.error('Sales report error', err);
                   setReportsError(err?.message || 'Failed to generate sales report');
@@ -441,6 +447,10 @@ export function ManagerDashboard() {
                   const endIso = endOfDay.toISOString();
                   const data = await reportsApi.getPopularDrinks(startIso, endIso);
                   setPopularReport(data);
+                  // show only popular
+                  setActiveReport('popular');
+                  setSalesReport(null);
+                  setStatusReport(null);
                   setPopularReportTime(new Date().toLocaleString());
                 } catch (err: any) {
                   console.error('Popular report error', err);
@@ -462,6 +472,10 @@ export function ManagerDashboard() {
                   const endIso = endOfDay.toISOString();
                   const data = await reportsApi.getOrdersByStatus(startIso, endIso);
                   setStatusReport(data);
+                  // show only status
+                  setActiveReport('status');
+                  setSalesReport(null);
+                  setPopularReport(null);
                   setStatusReportTime(new Date().toLocaleString());
                 } catch (err: any) {
                   console.error('Status report error', err);
@@ -474,14 +488,35 @@ export function ManagerDashboard() {
 
             {reportsLoading && <div className="text-sm text-gray-600">Generating report...</div>}
 
-            {salesReport && (
+            {activeReport === 'sales' && salesReport && (
               <div className="mt-4">
                 <h4 className="font-semibold">Sales Summary</h4>
-                <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-3 rounded-md">{JSON.stringify(salesReport, null, 2)}</pre>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Total Orders</p>
+                    <p className="text-2xl font-bold">{Number(salesReport.total_orders || 0)}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Total Revenue</p>
+                    <p className="text-2xl font-bold">${(parseFloat(salesReport.total_revenue || 0)).toFixed(2)}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Average Order</p>
+                    <p className="text-2xl font-bold">${(parseFloat(salesReport.avg_order_value || 0)).toFixed(2)}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Order Dates</p>
+                    <p className="text-sm">
+                      {salesReport.first_order ? new Date(salesReport.first_order).toLocaleString() : '—'}
+                      <br />
+                      {salesReport.last_order ? new Date(salesReport.last_order).toLocaleString() : '—'}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
-            {popularReport && (
+            {activeReport === 'popular' && popularReport && (
               <div className="mt-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold">Popular Items</h4>
@@ -504,7 +539,7 @@ export function ManagerDashboard() {
               </div>
             )}
 
-            {statusReport && (
+            {activeReport === 'status' && statusReport && (
               <div className="mt-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold">Orders by Status</h4>
