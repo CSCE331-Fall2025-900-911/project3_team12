@@ -53,6 +53,16 @@ export interface Manager {
   created_at?: string;
 }
 
+export interface InventoryItem {
+  id: number;
+  ingredient_name: string;
+  quantity: number;
+  unit: string;
+  min_quantity: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // API Error Handler
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -191,6 +201,55 @@ export const managersApi = {
       method: 'DELETE',
     });
     return handleResponse<{ message: string; email: string }>(response);
+  },
+};
+
+// Inventory API
+export const inventoryApi = {
+  // Get all inventory items
+  async getAll(): Promise<InventoryItem[]> {
+    const response = await fetch(`${API_BASE_URL}/inventory`);
+    return handleResponse<InventoryItem[]>(response);
+  },
+
+  // Get single inventory item
+  async getById(id: number): Promise<InventoryItem> {
+    const response = await fetch(`${API_BASE_URL}/inventory/${id}`);
+    return handleResponse<InventoryItem>(response);
+  },
+
+  // Add new inventory item
+  async add(item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at'>): Promise<InventoryItem> {
+    const response = await fetch(`${API_BASE_URL}/inventory`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    return handleResponse<InventoryItem>(response);
+  },
+
+  // Update inventory item
+  async update(id: number, item: Partial<Omit<InventoryItem, 'id' | 'created_at' | 'updated_at'>>): Promise<InventoryItem> {
+    const response = await fetch(`${API_BASE_URL}/inventory/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    return handleResponse<InventoryItem>(response);
+  },
+
+  // Delete inventory item
+  async delete(id: number): Promise<{ message: string; ingredient_name: string }> {
+    const response = await fetch(`${API_BASE_URL}/inventory/${id}`, {
+      method: 'DELETE',
+    });
+    return handleResponse<{ message: string; ingredient_name: string }>(response);
+  },
+
+  // Get low stock items
+  async getLowStock(): Promise<InventoryItem[]> {
+    const response = await fetch(`${API_BASE_URL}/inventory/alerts/low-stock`);
+    return handleResponse<InventoryItem[]>(response);
   },
 };
 
