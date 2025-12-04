@@ -42,6 +42,15 @@ export function CustomizationDialog({
     size: 'medium',
   });
 
+  // Reset customization when a new tea is selected
+  useEffect(() => {
+    setCustomization({
+      sugarLevel: 'normal',
+      toppings: [],
+      size: 'medium',
+    });
+  }, [tea.id]);
+
   useEffect(() => {
     if (open && window.google && window.google.translate) {
       setTimeout(() => {

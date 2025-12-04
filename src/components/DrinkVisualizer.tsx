@@ -51,39 +51,40 @@ export const DrinkVisualizer: React.FC<Props> = ({ tea, customization }) => {
 
   // Generate topping circles positions
   const renderBoba = () => {
-    const count = 8;
+    const count = 16;
     const circles = [] as JSX.Element[];
     for (let i = 0; i < count; i++) {
-      const x = 30 + (i % 4) * 28 + (Math.random() * 6 - 3);
-      const y = height - 34 - Math.floor(i / 4) * 12 + (Math.random() * 6 - 3);
+      const x = 25 + (i % 5) * 22 + (Math.random() * 8 - 4);
+      const y = height - 30 - Math.floor(i / 5) * 18 + (Math.random() * 8 - 4);
       circles.push(
-        <circle key={`boba-${i}`} cx={x} cy={y} r={6 * sizeScale} fill={TOPPING_COLORS['boba']} opacity={0.95} />
+        <circle key={`boba-${i}`} cx={x} cy={y} r={8 * sizeScale} fill={TOPPING_COLORS['boba']} opacity={0.95} />
       );
     }
     return circles;
   };
 
   const renderJelly = () => {
-    // one row of jelly pieces
+    // floating jelly squares throughout the drink
     const colors = ['#ff7fb3', '#ff9fb3', '#ff6f9f'];
     const pieces = [] as JSX.Element[];
-    for (let i = 0; i < 5; i++) {
-      const x = 26 + i * 26;
-      const y = height - 48;
+    const count = 22;
+    for (let i = 0; i < count; i++) {
+      const x = 25 + (i % 5) * 22 + (Math.random() * 8 - 4);
+      const y = height - 30 - Math.floor(i / 5) * 18 + (Math.random() * 8 - 4);
       pieces.push(
-        <rect key={`jelly-${i}`} x={x} y={y} width={14} height={10} rx={3} fill={colors[i % colors.length]} opacity={0.95} />
+        <rect key={`jelly-${i}`} x={x} y={y} width={10} height={10} rx={2} fill={colors[i % colors.length]} opacity={0.9} />
       );
     }
     return pieces;
   };
 
   const renderPudding = () => {
-    const x = width / 2 - 18;
-    const y = height - 56;
+    const x = width / 2 - 22;
+    const y = height - 60;
     return (
       <g>
-        <ellipse cx={x + 18} cy={y + 14} rx={22} ry={12} fill={TOPPING_COLORS['pudding']} opacity={0.95} />
-        <rect x={x + 4} y={y + 6} width={28} height={18} rx={6} fill={TOPPING_COLORS['pudding']} opacity={0.95} />
+        <ellipse cx={x + 22} cy={y + 18} rx={28} ry={15} fill={TOPPING_COLORS['pudding']} opacity={0.95} />
+        <rect x={x} y={y + 8} width={44} height={24} rx={8} fill={TOPPING_COLORS['pudding']} opacity={0.95} />
       </g>
     );
   };
