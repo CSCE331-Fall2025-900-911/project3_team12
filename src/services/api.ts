@@ -47,6 +47,12 @@ export interface Order {
   createdAt?: string;
 }
 
+export interface Manager {
+  id: number;
+  email: string;
+  created_at?: string;
+}
+
 // API Error Handler
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -152,6 +158,39 @@ export const ordersApi = {
       method: 'DELETE',
     });
     return handleResponse<{ message: string }>(response);
+  },
+};
+
+// Managers API
+export const managersApi = {
+  // Get all managers
+  async getAll(): Promise<Manager[]> {
+    const response = await fetch(`${API_BASE_URL}/managers`);
+    return handleResponse<Manager[]>(response);
+  },
+
+  // Check if email is a manager
+  async checkEmail(email: string): Promise<{ isManager: boolean; manager?: Manager }> {
+    const response = await fetch(`${API_BASE_URL}/managers/check/${encodeURIComponent(email)}`);
+    return handleResponse(response);
+  },
+
+  // Add new manager
+  async add(email: string): Promise<Manager> {
+    const response = await fetch(`${API_BASE_URL}/managers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse<Manager>(response);
+  },
+
+  // Delete manager
+  async delete(id: number): Promise<{ message: string; email: string }> {
+    const response = await fetch(`${API_BASE_URL}/managers/${id}`, {
+      method: 'DELETE',
+    });
+    return handleResponse<{ message: string; email: string }>(response);
   },
 };
 

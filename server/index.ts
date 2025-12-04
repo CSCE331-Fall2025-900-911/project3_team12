@@ -8,6 +8,7 @@ import pool, { query } from './db';
 import menuRoutes from './routes/menu';
 import orderRoutes from './routes/orders';
 import authRoutes from './routes/auth';
+import managersRoutes from './routes/managers';
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ app.get('/', (req: Request, res: Response) => {
       menu: '/api/menu',
       orders: '/api/orders',
       auth: '/api/auth',
+      managers: '/api/managers',
       weather: '/api/weather'
     }
   });
@@ -74,6 +76,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/managers', managersRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { menuApi } from '../services/api';
+import { menuApi, managersApi, Manager } from '../services/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -36,15 +36,19 @@ export function ManagerDashboard() {
   });
 
   // User management state
-  const [users, setUsers] = useState<string[]>([]);
+  const [managers, setManagers] = useState<Manager[]>([]);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [userError, setUserError] = useState<string | null>(null);
   const [userSuccess, setUserSuccess] = useState<string | null>(null);
+  const [isLoadingManagers, setIsLoadingManagers] = useState(false);
 
   useEffect(() => {
-    console.log('ManagerDashboard mounted, loading menu items...');
+    console.log('ManagerDashboard mounted, loading menu items and managers...');
     loadMenuItems().catch(err => {
       console.error('Failed to load menu items in useEffect:', err);
+    });
+    loadManagers().catch(err => {
+      console.error('Failed to load managers in useEffect:', err);
     });
   }, []);
 
@@ -66,6 +70,22 @@ export function ManagerDashboard() {
       setMenuItems([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadManagers = async () => {
+    try {
+      setIsLoadingManagers(true);
+      setUserError(null);
+      const managerList = await managersApi.getAll();
+      setManagers(managerList);
+      console.log('Managers loaded successfully:', managerList);
+    } catch (err) {
+      console.error('Error loading managers:', err);
+      setUserError('Failed to load managers from server.');
+      setManagers([]);
+    } finally {
+      setIsLoadingManagers(false);
     }
   };
 
@@ -140,7 +160,7 @@ export function ManagerDashboard() {
     });
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setUserError(null);
     setUserSuccess(null);
@@ -152,26 +172,41 @@ export function ManagerDashboard() {
       return;
     }
 
-    // Check if user already exists
-    if (users.includes(newUserEmail)) {
-      setUserError('This email is already in the system');
-      return;
+    try {
+      // Add manager to the database
+      await managersApi.add(newUserEmail);
+      setUserSuccess(`Manager ${newUserEmail} added successfully!`);
+      setNewUserEmail('');
+      
+      // Reload managers list
+      await loadManagers();
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setUserSuccess(null), 3000);
+    } catch (err: any) {
+      console.error('Error adding manager:', err);
+      if (err.message?.includes('already exists')) {
+        setUserError('This email is already in the system');
+      } else {
+        setUserError('Failed to add manager. Please try again.');
+      }
     }
-
-    // Add user to the list
-    setUsers([...users, newUserEmail]);
-    setUserSuccess(`User ${newUserEmail} added successfully!`);
-    setNewUserEmail('');
-
-    // Clear success message after 3 seconds
-    setTimeout(() => setUserSuccess(null), 3000);
   };
 
-  const handleRemoveUser = (email: string) => {
+  const handleRemoveUser = async (managerId: number, email: string) => {
     if (confirm(`Are you sure you want to remove ${email}?`)) {
-      setUsers(users.filter(user => user !== email));
-      setUserSuccess(`User ${email} removed successfully!`);
-      setTimeout(() => setUserSuccess(null), 3000);
+      try {
+        await managersApi.delete(managerId);
+        setUserSuccess(`Manager ${email} removed successfully!`);
+        
+        // Reload managers list
+        await loadManagers();
+        
+        setTimeout(() => setUserSuccess(null), 3000);
+      } catch (err: any) {
+        console.error('Error removing manager:', err);
+        setUserError(err.message || 'Failed to remove manager. Please try again.');
+      }
     }
   };
 
@@ -419,21 +454,23 @@ export function ManagerDashboard() {
 
             {/* User List */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">Authorized Users ({users.length})</h3>
-              {users.length === 0 ? (
-                <p className="text-gray-500 text-sm">No users added yet. Add your first user above.</p>
+              <h3 className="text-lg font-semibold mb-3">Authorized Managers ({managers.length})</h3>
+              {isLoadingManagers ? (
+                <p className="text-gray-500 text-sm">Loading managers...</p>
+              ) : managers.length === 0 ? (
+                <p className="text-gray-500 text-sm">No managers added yet. Add your first manager above.</p>
               ) : (
                 <div className="space-y-2">
-                  {users.map((email, index) => (
+                  {managers.map((manager) => (
                     <div
-                      key={index}
+                      key={manager.id}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-md border"
                     >
-                      <span className="text-sm font-medium">{email}</span>
+                      <span className="text-sm font-medium">{manager.email}</span>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveUser(email)}
+                        onClick={() => handleRemoveUser(manager.id, manager.email)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         Remove
