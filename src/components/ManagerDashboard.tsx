@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { menuApi, managersApi, Manager } from '../services/api';
+import { menuApi, managersApi, Manager, reportsApi } from '../services/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -31,7 +31,6 @@ export function ManagerDashboard() {
   const [salesReport, setSalesReport] = useState<any | null>(null);
   const [popularReport, setPopularReport] = useState<any[] | null>(null);
   const [statusReport, setStatusReport] = useState<any[] | null>(null);
-import { reportsApi } from '../services/api';
 
   // Form state
   const [formData, setFormData] = useState({
@@ -610,4 +609,3 @@ import { reportsApi } from '../services/api';
   }
 }
 
-//change
