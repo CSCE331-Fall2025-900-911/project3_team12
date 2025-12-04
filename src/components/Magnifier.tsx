@@ -47,10 +47,22 @@ export default function Magnifier() {
       document.addEventListener('dragstart', preventDragRef.current as any);
       // create clone of the app root to render inside the lens
       const root = document.getElementById('root') || document.body;
+      // mark the original lens so we can remove any cloned copy from the clone
+      try {
+        if (lensRef.current) lensRef.current.setAttribute('data-magnifier-original', 'true');
+      } catch {}
       const clone = (root.cloneNode(true) as HTMLElement) || null;
       if (clone) {
         // remove ids that might conflict
         clone.removeAttribute('id');
+        // remove any cloned copy of the lens (the clone will include the
+        // original lens element, which would render inside the magnifier
+        // and cause the white circular artifact). Remove elements that
+        // were marked on the original before cloning.
+        try {
+          const clonedOriginals = clone.querySelectorAll('[data-magnifier-original]');
+          clonedOriginals.forEach((n) => n.remove());
+        } catch {}
         // mark clone for identification
         clone.setAttribute('data-magnifier-clone', 'true');
         clone.style.pointerEvents = 'none';
@@ -70,6 +82,8 @@ export default function Magnifier() {
         // clear previous
         lensRef.current.innerHTML = '';
         lensRef.current.appendChild(cloneRef.current);
+        // remove the temporary marker from the real lens element
+        try { if (lensRef.current) lensRef.current.removeAttribute('data-magnifier-original'); } catch {}
       }
     }
 
