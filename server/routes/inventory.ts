@@ -193,6 +193,8 @@ router.get('/reports/usage', async (req: Request, res: Response) => {
   try {
     const { startDate, endDate } = req.query;
 
+    console.log('Report request:', { startDate, endDate });
+
     if (!startDate || !endDate) {
       return res.status(400).json({ 
         error: 'Start date and end date are required',
@@ -200,9 +202,19 @@ router.get('/reports/usage', async (req: Request, res: Response) => {
       });
     }
 
-    // Get inventory changes between dates
-    // This assumes we track inventory changes in a separate table
-    // For now, we'll create a mock report based on orders placed during this period
+    // Parse dates and set end date to end of day
+    const start = new Date(startDate as string);
+    const end = new Date(endDate as string);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({
+        error: 'Invalid date format',
+        message: 'Please provide valid dates in YYYY-MM-DD format'
+      });
+    }
+
+    // Set end date to end of day
+    end.setHours(23, 59, 59, 999);
     
     // First, check if inventory_usage table exists, if not return a basic report
     const tableCheck = await query(
@@ -213,14 +225,16 @@ router.get('/reports/usage', async (req: Request, res: Response) => {
     );
 
     if (!tableCheck.rows[0].exists) {
+      console.log('Generating basic report (no inventory_usage table)');
+      
       // Return a basic report based on orders in the date range
       const ordersResult = await query(
         `SELECT 
           COUNT(*) as total_orders,
-          SUM(total_price) as total_revenue
+          COALESCE(SUM(total_price), 0) as total_revenue
         FROM orders 
         WHERE created_at >= $1 AND created_at <= $2`,
-        [startDate, endDate]
+        [start.toISOString(), end.toISOString()]
       );
 
       const inventorySnapshot = await query(
@@ -229,7 +243,7 @@ router.get('/reports/usage', async (req: Request, res: Response) => {
 
       return res.json({
         reportType: 'basic',
-        dateRange: { startDate, endDate },
+        dateRange: { startDate: startDate as string, endDate: endDate as string },
         summary: {
           totalOrders: parseInt(ordersResult.rows[0].total_orders) || 0,
           totalRevenue: parseFloat(ordersResult.rows[0].total_revenue) || 0,
@@ -238,6 +252,8 @@ router.get('/reports/usage', async (req: Request, res: Response) => {
         currentInventory: inventorySnapshot.rows
       });
     }
+
+    console.log('Generating detailed report (inventory_usage table exists)');
 
     // If inventory_usage table exists, generate detailed report
     const usageResult = await query(
@@ -254,22 +270,22 @@ router.get('/reports/usage', async (req: Request, res: Response) => {
         AND iu.used_at <= $2
       GROUP BY i.id, i.ingredient_name, i.unit
       ORDER BY total_cost DESC`,
-      [startDate, endDate]
+      [start.toISOString(), end.toISOString()]
     );
 
     const summaryResult = await query(
       `SELECT 
         COUNT(DISTINCT iu.inventory_id) as items_used,
-        SUM(iu.quantity_used * iu.unit_cost) as total_cost,
-        SUM(iu.quantity_used) as total_units_used
+        COALESCE(SUM(iu.quantity_used * iu.unit_cost), 0) as total_cost,
+        COALESCE(SUM(iu.quantity_used), 0) as total_units_used
       FROM inventory_usage iu
       WHERE iu.used_at >= $1 AND iu.used_at <= $2`,
-      [startDate, endDate]
+      [start.toISOString(), end.toISOString()]
     );
 
     res.json({
       reportType: 'detailed',
-      dateRange: { startDate, endDate },
+      dateRange: { startDate: startDate as string, endDate: endDate as string },
       summary: {
         itemsUsed: parseInt(summaryResult.rows[0].items_used) || 0,
         totalCost: parseFloat(summaryResult.rows[0].total_cost) || 0,
@@ -286,9 +302,10 @@ router.get('/reports/usage', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error generating inventory usage report:', error);
+    console.error('Error details:', error instanceof Error ? error.stack : String(error));
     res.status(500).json({ 
       error: 'Failed to generate inventory usage report',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
