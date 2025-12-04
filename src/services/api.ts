@@ -63,6 +63,33 @@ export interface InventoryItem {
   updated_at?: string;
 }
 
+export interface InventoryUsageReportItem {
+  ingredientName: string;
+  unit: string;
+  totalUsed: number;
+  avgUnitCost: number;
+  totalCost: number;
+  usageCount: number;
+}
+
+export interface InventoryUsageReport {
+  reportType: 'basic' | 'detailed';
+  dateRange: {
+    startDate: string;
+    endDate: string;
+  };
+  summary: {
+    itemsUsed?: number;
+    totalCost: number;
+    totalUnitsUsed?: number;
+    totalOrders?: number;
+    totalRevenue?: number;
+    message?: string;
+  };
+  items?: InventoryUsageReportItem[];
+  currentInventory?: InventoryItem[];
+}
+
 // API Error Handler
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -250,6 +277,14 @@ export const inventoryApi = {
   async getLowStock(): Promise<InventoryItem[]> {
     const response = await fetch(`${API_BASE_URL}/inventory/alerts/low-stock`);
     return handleResponse<InventoryItem[]>(response);
+  },
+
+  // Get inventory usage report
+  async getUsageReport(startDate: string, endDate: string): Promise<InventoryUsageReport> {
+    const response = await fetch(
+      `${API_BASE_URL}/inventory/reports/usage?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+    );
+    return handleResponse<InventoryUsageReport>(response);
   },
 };
 

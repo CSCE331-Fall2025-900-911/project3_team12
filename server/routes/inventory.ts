@@ -144,4 +144,153 @@ router.get('/alerts/low-stock', async (req: Request, res: Response) => {
   }
 });
 
+// Record inventory usage
+router.post('/usage', async (req: Request, res: Response) => {
+  try {
+    const { inventory_id, quantity_used, unit_cost, order_id, notes, created_by } = req.body;
+
+    if (!inventory_id || !quantity_used) {
+      return res.status(400).json({ 
+        error: 'Inventory ID and quantity used are required',
+        message: 'Please provide both inventory_id and quantity_used'
+      });
+    }
+
+    // Check if inventory_usage table exists
+    const tableCheck = await query(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'inventory_usage'
+      )`
+    );
+
+    if (!tableCheck.rows[0].exists) {
+      return res.status(501).json({ 
+        error: 'Inventory usage tracking not enabled',
+        message: 'Please run the add_inventory_usage_table.sql migration first'
+      });
+    }
+
+    const result = await query(
+      `INSERT INTO inventory_usage (inventory_id, quantity_used, unit_cost, order_id, notes, created_by) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
+       RETURNING id, inventory_id, quantity_used, unit_cost, order_id, used_at, notes, created_by`,
+      [inventory_id, quantity_used, unit_cost || 0, order_id || null, notes || null, created_by || null]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error recording inventory usage:', error);
+    res.status(500).json({ 
+      error: 'Failed to record inventory usage',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get inventory usage report
+router.get('/reports/usage', async (req: Request, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ 
+        error: 'Start date and end date are required',
+        message: 'Please provide both startDate and endDate query parameters'
+      });
+    }
+
+    // Get inventory changes between dates
+    // This assumes we track inventory changes in a separate table
+    // For now, we'll create a mock report based on orders placed during this period
+    
+    // First, check if inventory_usage table exists, if not return a basic report
+    const tableCheck = await query(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'inventory_usage'
+      )`
+    );
+
+    if (!tableCheck.rows[0].exists) {
+      // Return a basic report based on orders in the date range
+      const ordersResult = await query(
+        `SELECT 
+          COUNT(*) as total_orders,
+          SUM(total_price) as total_revenue
+        FROM orders 
+        WHERE created_at >= $1 AND created_at <= $2`,
+        [startDate, endDate]
+      );
+
+      const inventorySnapshot = await query(
+        'SELECT id, ingredient_name, quantity, unit, min_quantity FROM inventory ORDER BY ingredient_name ASC'
+      );
+
+      return res.json({
+        reportType: 'basic',
+        dateRange: { startDate, endDate },
+        summary: {
+          totalOrders: parseInt(ordersResult.rows[0].total_orders) || 0,
+          totalRevenue: parseFloat(ordersResult.rows[0].total_revenue) || 0,
+          message: 'Detailed inventory usage tracking not yet implemented'
+        },
+        currentInventory: inventorySnapshot.rows
+      });
+    }
+
+    // If inventory_usage table exists, generate detailed report
+    const usageResult = await query(
+      `SELECT 
+        i.ingredient_name,
+        i.unit,
+        COALESCE(SUM(iu.quantity_used), 0) as total_used,
+        COALESCE(AVG(iu.unit_cost), 0) as avg_unit_cost,
+        COALESCE(SUM(iu.quantity_used * iu.unit_cost), 0) as total_cost,
+        COUNT(iu.id) as usage_count
+      FROM inventory i
+      LEFT JOIN inventory_usage iu ON i.id = iu.inventory_id 
+        AND iu.used_at >= $1 
+        AND iu.used_at <= $2
+      GROUP BY i.id, i.ingredient_name, i.unit
+      ORDER BY total_cost DESC`,
+      [startDate, endDate]
+    );
+
+    const summaryResult = await query(
+      `SELECT 
+        COUNT(DISTINCT iu.inventory_id) as items_used,
+        SUM(iu.quantity_used * iu.unit_cost) as total_cost,
+        SUM(iu.quantity_used) as total_units_used
+      FROM inventory_usage iu
+      WHERE iu.used_at >= $1 AND iu.used_at <= $2`,
+      [startDate, endDate]
+    );
+
+    res.json({
+      reportType: 'detailed',
+      dateRange: { startDate, endDate },
+      summary: {
+        itemsUsed: parseInt(summaryResult.rows[0].items_used) || 0,
+        totalCost: parseFloat(summaryResult.rows[0].total_cost) || 0,
+        totalUnitsUsed: parseFloat(summaryResult.rows[0].total_units_used) || 0
+      },
+      items: usageResult.rows.map(row => ({
+        ingredientName: row.ingredient_name,
+        unit: row.unit,
+        totalUsed: parseFloat(row.total_used),
+        avgUnitCost: parseFloat(row.avg_unit_cost),
+        totalCost: parseFloat(row.total_cost),
+        usageCount: parseInt(row.usage_count)
+      }))
+    });
+  } catch (error) {
+    console.error('Error generating inventory usage report:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate inventory usage report',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export default router;
