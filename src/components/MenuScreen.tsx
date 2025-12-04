@@ -65,18 +65,15 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
       </div>
 
       {/* Menu Grid */}
-      <div className="max-w-7xl mx-auto px-8 py-12">
-        <div
-          className={
-            showImages
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-          }
+      <div className={showImages ? "max-w-7xl mx-auto px-8 py-12" : "w-full px-8 py-12"}>
+        <div 
+          className={showImages ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "gap-4"} 
+          style={!showImages ? { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', width: '100%', gridAutoRows: 'minmax(min-content, max-content)' } : undefined}
         >
           {bubbleTeaMenu.map((tea) => (
             <Card
               key={tea.id}
-              className="h-full overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col"
+              className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col"
               onClick={() => handleSelectTea(tea)}
             >
               {showImages && (
@@ -88,20 +85,16 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
                   />
                 </div>
               )}
-              <div className={showImages ? "p-4 space-y-2 flex-1 flex flex-col" : "p-2 space-y-1 flex-1 flex flex-col"}>
+              <div className={showImages ? "p-4 space-y-2 flex-1 flex flex-col" : "p-3 space-y-2 flex-1 flex flex-col"}>
                 <div className="flex items-start justify-between">
-                  <h3 className={showImages ? "text-xl" : "text-sm"}>{tea.name}</h3>
+                  <h3 className={showImages ? "text-xl" : "text-base font-semibold"}>{tea.name}</h3>
                   <Badge variant="secondary" className="ml-2 bg-accent text-accent-foreground">
                     ${tea.basePrice.toFixed(2)}
                   </Badge>
                 </div>
-                {showImages && <p className="text-muted-foreground text-sm">{tea.description}</p>}
+                <p className="text-muted-foreground text-sm">{tea.description}</p>
                 <Button
-                  className={
-                    showImages
-                      ? "w-full bg-primary hover:bg-primary/90"
-                      : "w-full bg-primary hover:bg-primary/90 py-1 h-8"
-                  }
+                  className="w-full bg-primary hover:bg-primary/90 mt-auto"
                 >
                   {showImages ? "Customize & Add" : "Add"}
                 </Button>
