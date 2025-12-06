@@ -56,7 +56,7 @@ npm run dev           # Start frontend dev server
 npm run build         # Build frontend for production
 npm run server        # Start backend server
 npm run server:dev    # Start backend with auto-reload
-npm run db:setup      # Initialize database tables
+npm run db:setup      # Initialize database tables and data
 ```
 
 ## 🛠️ Technology Stack
