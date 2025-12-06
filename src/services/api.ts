@@ -230,17 +230,19 @@ export const healthApi = {
 export const reportsApi = {
   // Sales summary (optional start/end ISO strings)
   async getSalesSummary(start?: string, end?: string): Promise<any> {
-    let url = `${API_BASE_URL}/reports/sales`;
+    const params = new URLSearchParams();
     if (start && end) {
-      const params = new URLSearchParams();
       params.set('start', start);
       params.set('end', end);
       // also include fallback names for compatibility
       params.set('startDate', start);
       params.set('endDate', end);
-      url += `?${params.toString()}`;
     }
-    const response = await fetch(url);
+    // Cache-buster to avoid 304 and stale responses
+    params.set('_ts', String(Date.now()));
+    const qs = params.toString();
+    const url = `${API_BASE_URL}/reports/sales${qs ? `?${qs}` : ''}`;
+    const response = await fetch(url, { headers: { 'Cache-Control': 'no-cache' } });
     return handleResponse(response);
   },
 
