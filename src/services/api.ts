@@ -138,23 +138,15 @@ export const menuApi = {
 
 // Orders API
 export const ordersApi = {
-  async getSalesSummary(start?: string, end?: string) {
-    const params = new URLSearchParams();
-    if (start && end) {
-      // Send both variants to be safe
-      params.set('start', start);
-      params.set('end', end);
-      params.set('startDate', start);
-      params.set('endDate', end);
-    }
-    // Cache-buster to avoid 304 and stale responses
-    params.set('_ts', String(Date.now()));
-    const qs = params.toString();
-    const url = `${API_BASE}/reports/sales${qs ? `?${qs}` : ''}`;
-    const res = await fetch(url, {
-      credentials: 'include',
-      headers: { 'Cache-Control': 'no-cache' },
-    });
+  // Convenience wrapper: forward to reportsApi.getSalesSummary
+  async getSalesSummary(start?: string, end?: string): Promise<any> {
+    // `reportsApi` is defined later in this module; calling at runtime is safe
+    // This keeps compatibility for any callers using ordersApi.getSalesSummary
+    // and avoids duplicating implementation.
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    return (reportsApi as any).getSalesSummary(start, end);
+  },
+  // Orders-related methods
 
   // Create new order
   async create(order: { items: OrderItem[]; totalPrice: number }): Promise<Order> {
