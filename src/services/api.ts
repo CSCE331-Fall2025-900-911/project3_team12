@@ -155,6 +155,8 @@ export const ordersApi = {
       credentials: 'include',
       headers: { 'Cache-Control': 'no-cache' },
     });
+    return handleResponse(res);
+  },
 
   // Create new order
   async create(order: { items: OrderItem[]; totalPrice: number }): Promise<Order> {
