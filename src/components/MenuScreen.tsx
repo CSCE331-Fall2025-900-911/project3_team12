@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BubbleTea, CartItem } from '../types/types';
-import { bubbleTeaMenu } from '../data/menu';
+import { menuApi } from '../services/api';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -19,7 +19,38 @@ interface MenuScreenProps {
 export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages = true }: MenuScreenProps) {
   const [selectedTea, setSelectedTea] = useState<BubbleTea | null>(null);
   const [showCustomization, setShowCustomization] = useState(false);
+  const [menuItems, setMenuItems] = useState<BubbleTea[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { setEnabled } = useMagnifier();
+
+  useEffect(() => {
+    loadMenuItems();
+  }, []);
+
+  const loadMenuItems = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const items = await menuApi.getAll();
+      // Convert MenuItem to BubbleTea format
+      const convertedItems: BubbleTea[] = items.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        basePrice: typeof item.basePrice === 'string' ? parseFloat(item.basePrice) : item.basePrice,
+        image: item.image,
+        category: item.category as 'milk-tea' | 'fruit-tea' | 'specialty'
+      }));
+      setMenuItems(convertedItems);
+    } catch (err) {
+      console.error('Error loading menu items:', err);
+      setError('Failed to load menu items');
+      setMenuItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSelectTea = (tea: BubbleTea) => {
     setSelectedTea(tea);
@@ -66,11 +97,25 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
 
       {/* Menu Grid */}
       <div className={showImages ? "max-w-7xl mx-auto px-8 py-12" : "w-full px-8 py-12"}>
-        <div 
-          className={showImages ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "gap-4"} 
-          style={!showImages ? { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', width: '100%', gridAutoRows: 'minmax(min-content, max-content)' } : undefined}
-        >
-          {bubbleTeaMenu.map((tea) => (
+        {isLoading ? (
+          <div className="text-center py-20">
+            <div className="text-xl text-gray-600">Loading menu...</div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-20">
+            <div className="text-xl text-red-600">{error}</div>
+            <Button onClick={loadMenuItems} className="mt-4">Retry</Button>
+          </div>
+        ) : menuItems.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-xl text-gray-600">No menu items available</div>
+          </div>
+        ) : (
+          <div 
+            className={showImages ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "gap-4"} 
+            style={!showImages ? { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', width: '100%', gridAutoRows: 'minmax(min-content, max-content)' } : undefined}
+          >
+            {menuItems.map((tea) => (
             <Card
               key={tea.id}
               className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col"
@@ -100,8 +145,9 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
                 </Button>
               </div>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Customization Dialog */}
