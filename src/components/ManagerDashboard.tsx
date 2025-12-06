@@ -491,6 +491,11 @@ export function ManagerDashboard() {
             {activeReport === 'sales' && salesReport && (
               <div className="mt-4">
                 <h4 className="font-semibold">Sales Summary</h4>
+                {salesReport.applied_range && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    Applied Range: {new Date(salesReport.applied_range.start).toLocaleString()} — {new Date(salesReport.applied_range.end).toLocaleString()}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
                   <div className="p-4 bg-gray-50 rounded">
                     <p className="text-sm text-gray-600">Total Orders</p>

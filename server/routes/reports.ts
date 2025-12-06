@@ -30,7 +30,11 @@ router.get('/sales', async (req: Request, res: Response) => {
       FROM orders
       ${where}
     `, params);
-    res.json(result.rows[0]);
+    const payload = result.rows[0] || {};
+    res.json({
+      ...payload,
+      applied_range: start && end ? { start, end } : null
+    });
   } catch (error) {
     console.error('Error generating sales summary:', error);
     res.status(500).json({ error: 'Failed to generate sales summary' });
