@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { menuApi, managersApi, Manager, reportsApi } from '../services/api';
-import { menuApi, managersApi, Manager, inventoryApi, InventoryItem, InventoryUsageReport } from '../services/api';
+import { menuApi, managersApi, Manager, inventoryApi, InventoryItem, InventoryUsageReport, reportsApi } from '../services/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -33,6 +32,16 @@ export function ManagerDashboard() {
   const [salesReport, setSalesReport] = useState<any | null>(null);
   const [popularReport, setPopularReport] = useState<any[] | null>(null);
   const [statusReport, setStatusReport] = useState<any[] | null>(null);
+
+  // Sales date range state
+  const [salesStartDate, setSalesStartDate] = useState('');
+  const [salesEndDate, setSalesEndDate] = useState('');
+
+  // Report timestamps for X/Z reports
+  const [popularReportTime, setPopularReportTime] = useState<string | null>(null);
+  const [statusReportTime, setStatusReportTime] = useState<string | null>(null);
+  // Which report is currently shown: 'sales' | 'popular' | 'status' | null
+  const [activeReport, setActiveReport] = useState<'sales' | 'popular' | 'status' | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -381,13 +390,43 @@ export function ManagerDashboard() {
               </Alert>
             )}
 
+            <div className="flex gap-3 mb-4 items-end">
+              <div className="flex items-center gap-2">
+                <label className="text-sm">Sales From</label>
+                <Input
+                  type="date"
+                  value={salesStartDate}
+                  onChange={(e) => setSalesStartDate(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm">To</label>
+                <Input
+                  type="date"
+                  value={salesEndDate}
+                  onChange={(e) => setSalesEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+
             <div className="flex gap-3 mb-4">
               <Button onClick={async () => {
                 setReportsError(null);
                 setReportsLoading(true);
                 try {
-                  const data = await reportsApi.getSalesSummary();
+                  let data;
+                  if (salesStartDate && salesEndDate) {
+                    const startIso = new Date(salesStartDate + 'T00:00:00').toISOString();
+                    const endIso = new Date(salesEndDate + 'T23:59:59.999').toISOString();
+                    data = await reportsApi.getSalesSummary(startIso, endIso);
+                  } else {
+                    data = await reportsApi.getSalesSummary();
+                  }
                   setSalesReport(data);
+                  // show only sales
+                  setActiveReport('sales');
+                  setPopularReport(null);
+                  setStatusReport(null);
                 } catch (err: any) {
                   console.error('Sales report error', err);
                   setReportsError(err?.message || 'Failed to generate sales report');
@@ -400,8 +439,19 @@ export function ManagerDashboard() {
                 setReportsError(null);
                 setReportsLoading(true);
                 try {
-                  const data = await reportsApi.getPopularDrinks();
+                  // compute today's range explicitly
+                  const now = new Date();
+                  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+                  const startIso = startOfDay.toISOString();
+                  const endIso = endOfDay.toISOString();
+                  const data = await reportsApi.getPopularDrinks(startIso, endIso);
                   setPopularReport(data);
+                  // show only popular
+                  setActiveReport('popular');
+                  setSalesReport(null);
+                  setStatusReport(null);
+                  setPopularReportTime(new Date().toLocaleString());
                 } catch (err: any) {
                   console.error('Popular report error', err);
                   setReportsError(err?.message || 'Failed to generate popular items report');
@@ -414,8 +464,19 @@ export function ManagerDashboard() {
                 setReportsError(null);
                 setReportsLoading(true);
                 try {
-                  const data = await reportsApi.getOrdersByStatus();
+                  // today's range
+                  const now = new Date();
+                  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+                  const startIso = startOfDay.toISOString();
+                  const endIso = endOfDay.toISOString();
+                  const data = await reportsApi.getOrdersByStatus(startIso, endIso);
                   setStatusReport(data);
+                  // show only status
+                  setActiveReport('status');
+                  setSalesReport(null);
+                  setPopularReport(null);
+                  setStatusReportTime(new Date().toLocaleString());
                 } catch (err: any) {
                   console.error('Status report error', err);
                   setReportsError(err?.message || 'Failed to generate orders-by-status report');
@@ -427,16 +488,45 @@ export function ManagerDashboard() {
 
             {reportsLoading && <div className="text-sm text-gray-600">Generating report...</div>}
 
-            {salesReport && (
+            {activeReport === 'sales' && salesReport && (
               <div className="mt-4">
                 <h4 className="font-semibold">Sales Summary</h4>
-                <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-3 rounded-md">{JSON.stringify(salesReport, null, 2)}</pre>
+                {salesReport.applied_range && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    Applied Range: {new Date(salesReport.applied_range.start).toLocaleString()} — {new Date(salesReport.applied_range.end).toLocaleString()}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Total Orders</p>
+                    <p className="text-2xl font-bold">{Number(salesReport.total_orders || 0)}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Total Revenue</p>
+                    <p className="text-2xl font-bold">${(parseFloat(salesReport.total_revenue || 0)).toFixed(2)}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Average Order</p>
+                    <p className="text-2xl font-bold">${(parseFloat(salesReport.avg_order_value || 0)).toFixed(2)}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Order Dates</p>
+                    <p className="text-sm">
+                      {salesReport.first_order ? new Date(salesReport.first_order).toLocaleString() : '—'}
+                      <br />
+                      {salesReport.last_order ? new Date(salesReport.last_order).toLocaleString() : '—'}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
-            {popularReport && (
+            {activeReport === 'popular' && popularReport && (
               <div className="mt-4">
-                <h4 className="font-semibold">Popular Items</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold">Popular Items</h4>
+                  {popularReportTime && <div className="text-sm text-gray-500">As of: {popularReportTime}</div>}
+                </div>
                 <table className="w-full text-sm mt-2 border-collapse">
                   <thead>
                     <tr className="text-left border-b"><th>Name</th><th>Times Ordered</th><th>Total Quantity</th></tr>
@@ -454,9 +544,12 @@ export function ManagerDashboard() {
               </div>
             )}
 
-            {statusReport && (
+            {activeReport === 'status' && statusReport && (
               <div className="mt-4">
-                <h4 className="font-semibold">Orders by Status</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold">Orders by Status</h4>
+                  {statusReportTime && <div className="text-sm text-gray-500">As of: {statusReportTime}</div>}
+                </div>
                 <table className="w-full text-sm mt-2 border-collapse">
                   <thead>
                     <tr className="text-left border-b"><th>Status</th><th>Count</th><th>Total Value</th></tr>

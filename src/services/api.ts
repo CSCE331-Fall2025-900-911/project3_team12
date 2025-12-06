@@ -63,30 +63,11 @@ export interface InventoryItem {
   updated_at?: string;
 }
 
-export interface InventoryUsageReportItem {
-  ingredientName: string;
-  unit: string;
-  totalUsed: number;
-  avgUnitCost: number;
-  totalCost: number;
-  usageCount: number;
-}
-
 export interface InventoryUsageReport {
   reportType: 'basic' | 'detailed';
-  dateRange: {
-    startDate: string;
-    endDate: string;
-  };
-  summary: {
-    itemsUsed?: number;
-    totalCost: number;
-    totalUnitsUsed?: number;
-    totalOrders?: number;
-    totalRevenue?: number;
-    message?: string;
-  };
-  items?: InventoryUsageReportItem[];
+  dateRange: { startDate: string; endDate: string };
+  summary: any;
+  items?: any[];
   currentInventory?: InventoryItem[];
 }
 
@@ -157,17 +138,23 @@ export const menuApi = {
 
 // Orders API
 export const ordersApi = {
-  // Get all orders
-  async getAll(): Promise<Order[]> {
-    const response = await fetch(`${API_BASE_URL}/orders`);
-    return handleResponse<Order[]>(response);
-  },
-
-  // Get single order
-  async getById(id: number): Promise<Order> {
-    const response = await fetch(`${API_BASE_URL}/orders?id=${id}`);
-    return handleResponse<Order>(response);
-  },
+  async getSalesSummary(start?: string, end?: string) {
+    const params = new URLSearchParams();
+    if (start && end) {
+      // Send both variants to be safe
+      params.set('start', start);
+      params.set('end', end);
+      params.set('startDate', start);
+      params.set('endDate', end);
+    }
+    // Cache-buster to avoid 304 and stale responses
+    params.set('_ts', String(Date.now()));
+    const qs = params.toString();
+    const url = `${API_BASE}/reports/sales${qs ? `?${qs}` : ''}`;
+    const res = await fetch(url, {
+      credentials: 'include',
+      headers: { 'Cache-Control': 'no-cache' },
+    });
 
   // Create new order
   async create(order: { items: OrderItem[]; totalPrice: number }): Promise<Order> {
@@ -231,63 +218,6 @@ export const managersApi = {
   },
 };
 
-// Inventory API
-export const inventoryApi = {
-  // Get all inventory items
-  async getAll(): Promise<InventoryItem[]> {
-    const response = await fetch(`${API_BASE_URL}/inventory`);
-    return handleResponse<InventoryItem[]>(response);
-  },
-
-  // Get single inventory item
-  async getById(id: number): Promise<InventoryItem> {
-    const response = await fetch(`${API_BASE_URL}/inventory/${id}`);
-    return handleResponse<InventoryItem>(response);
-  },
-
-  // Add new inventory item
-  async add(item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at'>): Promise<InventoryItem> {
-    const response = await fetch(`${API_BASE_URL}/inventory`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    });
-    return handleResponse<InventoryItem>(response);
-  },
-
-  // Update inventory item
-  async update(id: number, item: Partial<Omit<InventoryItem, 'id' | 'created_at' | 'updated_at'>>): Promise<InventoryItem> {
-    const response = await fetch(`${API_BASE_URL}/inventory/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    });
-    return handleResponse<InventoryItem>(response);
-  },
-
-  // Delete inventory item
-  async delete(id: number): Promise<{ message: string; ingredient_name: string }> {
-    const response = await fetch(`${API_BASE_URL}/inventory/${id}`, {
-      method: 'DELETE',
-    });
-    return handleResponse<{ message: string; ingredient_name: string }>(response);
-  },
-
-  // Get low stock items
-  async getLowStock(): Promise<InventoryItem[]> {
-    const response = await fetch(`${API_BASE_URL}/inventory/alerts/low-stock`);
-    return handleResponse<InventoryItem[]>(response);
-  },
-
-  // Get inventory usage report
-  async getUsageReport(startDate: string, endDate: string): Promise<InventoryUsageReport> {
-    const response = await fetch(
-      `${API_BASE_URL}/inventory/reports/usage?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
-    );
-    return handleResponse<InventoryUsageReport>(response);
-  },
-};
-
 // Health check
 export const healthApi = {
   async check(): Promise<{ status: string; database: string; timestamp: string }> {
@@ -298,22 +228,87 @@ export const healthApi = {
 
 // Reports API
 export const reportsApi = {
-  // Sales summary
-  async getSalesSummary(): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/reports/sales`);
+  // Sales summary (optional start/end ISO strings)
+  async getSalesSummary(start?: string, end?: string): Promise<any> {
+    let url = `${API_BASE_URL}/reports/sales`;
+    if (start && end) {
+      const params = new URLSearchParams();
+      params.set('start', start);
+      params.set('end', end);
+      // also include fallback names for compatibility
+      params.set('startDate', start);
+      params.set('endDate', end);
+      url += `?${params.toString()}`;
+    }
+    const response = await fetch(url);
     return handleResponse(response);
   },
 
-  // Most popular drinks
-  async getPopularDrinks(): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/reports/popular`);
+  // Most popular drinks (optional start/end ISO strings). If not provided, server defaults to today.
+  async getPopularDrinks(start?: string, end?: string): Promise<any[]> {
+    let url = `${API_BASE_URL}/reports/popular`;
+    if (start && end) {
+      const params = new URLSearchParams();
+      params.set('start', start);
+      params.set('end', end);
+      params.set('startDate', start);
+      params.set('endDate', end);
+      url += `?${params.toString()}`;
+    }
+    const response = await fetch(url);
     return handleResponse<any[]>(response);
   },
 
-  // Orders grouped by status
-  async getOrdersByStatus(): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/reports/status`);
+  // Orders grouped by status (optional start/end). If not provided, server defaults to today.
+  async getOrdersByStatus(start?: string, end?: string): Promise<any[]> {
+    let url = `${API_BASE_URL}/reports/status`;
+    if (start && end) {
+      const params = new URLSearchParams();
+      params.set('start', start);
+      params.set('end', end);
+      params.set('startDate', start);
+      params.set('endDate', end);
+      url += `?${params.toString()}`;
+    }
+    const response = await fetch(url);
     return handleResponse<any[]>(response);
+  }
+};
+
+// Inventory API
+export const inventoryApi = {
+  async getAll(): Promise<InventoryItem[]> {
+    const response = await fetch(`${API_BASE_URL}/inventory`);
+    return handleResponse<InventoryItem[]>(response);
+  },
+  async getById(id: number): Promise<InventoryItem> {
+    const response = await fetch(`${API_BASE_URL}/inventory/${id}`);
+    return handleResponse<InventoryItem>(response);
+  },
+  async add(item: { ingredient_name: string; quantity: number; unit: string; min_quantity: number }): Promise<InventoryItem> {
+    const response = await fetch(`${API_BASE_URL}/inventory`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    return handleResponse<InventoryItem>(response);
+  },
+  async update(id: number, item: Partial<{ ingredient_name: string; quantity: number; unit: string; min_quantity: number }>): Promise<InventoryItem> {
+    const response = await fetch(`${API_BASE_URL}/inventory/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    return handleResponse<InventoryItem>(response);
+  },
+  async delete(id: number): Promise<{ message: string; ingredient_name?: string }> {
+    const response = await fetch(`${API_BASE_URL}/inventory/${id}`, { method: 'DELETE' });
+    return handleResponse(response);
+  },
+  async getUsageReport(startDate: string, endDate: string): Promise<InventoryUsageReport> {
+    const params = new URLSearchParams({ startDate, endDate });
+    const response = await fetch(`${API_BASE_URL}/inventory/reports/usage?${params.toString()}`);
+    return handleResponse<InventoryUsageReport>(response);
   }
 };
 
