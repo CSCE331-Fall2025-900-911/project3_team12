@@ -418,10 +418,13 @@ export function ManagerDashboard() {
                   if (salesStartDate && salesEndDate) {
                     const startIso = new Date(salesStartDate + 'T00:00:00').toISOString();
                     const endIso = new Date(salesEndDate + 'T23:59:59.999').toISOString();
+                    console.log('Sales request range:', { startIso, endIso });
                     data = await reportsApi.getSalesSummary(startIso, endIso);
                   } else {
+                    console.log('Sales request without range');
                     data = await reportsApi.getSalesSummary();
                   }
+                  console.log('Sales report payload:', data);
                   setSalesReport(data);
                   // show only sales
                   setActiveReport('sales');
