@@ -22,6 +22,37 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
   const { setEnabled } = useMagnifier();
   const prevMagnifierStateRef = useRef<boolean>(false);
 
+  useEffect(() => {
+    loadMenuItems();
+  }, []);
+
+  const loadMenuItems = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const items = await menuApi.getAll();
+      // Convert MenuItem to BubbleTea format
+      const convertedItems: BubbleTea[] = items.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        basePrice: typeof item.basePrice === 'string' ? parseFloat(item.basePrice) : item.basePrice,
+        image: item.image,
+        category: item.category as 'milk-tea' | 'fruit-tea' | 'specialty',
+        calories: item.calories || 0,
+        sugar: typeof item.sugar === 'string' ? parseFloat(item.sugar) : (item.sugar || 0),
+        protein: typeof item.protein === 'string' ? parseFloat(item.protein) : (item.protein || 0)
+      }));
+      setMenuItems(convertedItems);
+    } catch (err) {
+      console.error('Error loading menu items:', err);
+      setError('Failed to load menu items');
+      setMenuItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSelectTea = (tea: BubbleTea) => {
     setSelectedTea(tea);
     // Store previous magnifier state and disable it while dialog is open

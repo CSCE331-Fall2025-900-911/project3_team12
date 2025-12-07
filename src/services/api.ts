@@ -21,6 +21,9 @@ export interface MenuItem {
   basePrice: number;
   image: string;
   category: string;
+  calories: number;
+  sugar: number;
+  protein: number;
 }
 
 export interface Topping {
@@ -150,7 +153,7 @@ export const ordersApi = {
     // Cache-buster to avoid 304 and stale responses
     params.set('_ts', String(Date.now()));
     const qs = params.toString();
-    const url = `${API_BASE}/reports/sales${qs ? `?${qs}` : ''}`;
+    const url = `${API_BASE_URL}/reports/sales${qs ? `?${qs}` : ''}`;
     const res = await fetch(url, {
       credentials: 'include',
       headers: { 'Cache-Control': 'no-cache' },
