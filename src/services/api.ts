@@ -119,7 +119,7 @@ export const menuApi = {
 
   // Update menu item (admin)
   async update(id: string, item: Partial<MenuItem>): Promise<MenuItem> {
-    const response = await fetch(`${API_BASE_URL}/menu?id=${id}`, {
+    const response = await fetch(`${API_BASE_URL}/menu/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
@@ -129,7 +129,7 @@ export const menuApi = {
 
   // Delete menu item (admin)
   async delete(id: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/menu?id=${id}`, {
+    const response = await fetch(`${API_BASE_URL}/menu/${id}`, {
       method: 'DELETE',
     });
     return handleResponse<{ message: string }>(response);
