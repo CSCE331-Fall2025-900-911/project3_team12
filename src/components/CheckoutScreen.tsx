@@ -35,6 +35,7 @@ export function CheckoutScreen({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<CartItem | null>(null);
 
   const calculateItemTotal = (item: CartItem) => {
     let total = item.tea.basePrice;
@@ -92,6 +93,21 @@ export function CheckoutScreen({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDeleteClick = (item: CartItem) => {
+    setItemToDelete(item);
+  };
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      onRemoveItem(itemToDelete.id);
+      setItemToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setItemToDelete(null);
   };
 
   const handleConfirmOrder = () => {
@@ -167,7 +183,7 @@ export function CheckoutScreen({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => onRemoveItem(item.id)}
+                          onClick={() => handleDeleteClick(item)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -270,6 +286,26 @@ export function CheckoutScreen({
             >
               Start New Order
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Item Confirmation Dialog */}
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open: boolean) => !open && handleCancelDelete()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove "{itemToDelete?.tea.name}" from your cart?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Remove
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
