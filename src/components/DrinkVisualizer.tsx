@@ -9,7 +9,7 @@ interface Props {
 // Map tea names to colors (approximate hex values)
 const TEA_COLORS: Record<string, string | string[]> = {
   'Original Milk Tea': '#fcf3e1ff', // light beige
-  'Black Milk Tea': '#534329ff',
+  'Black Milk Tea': '#926f35ff',
   'Oolong Milk Tea': '#dea150ff', // slight amber
   'Green Milk Tea': '#e8f3e6', // pale creamy green
   'Capuccino Milk Tea': '#cd966bff', // coffee brown

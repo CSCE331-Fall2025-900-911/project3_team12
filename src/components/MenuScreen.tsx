@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BubbleTea, CartItem } from '../types/types';
+import { BubbleTea, CartItem, Customization } from '../types/types';
 import { bubbleTeaMenu } from '../data/menu';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -17,6 +17,11 @@ interface MenuScreenProps {
 export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
   const [selectedTea, setSelectedTea] = useState<BubbleTea | null>(null);
   const [showCustomization, setShowCustomization] = useState(false);
+  const [customization, setCustomization] = useState<Customization>({
+    sugarLevel: 'normal',
+    toppings: [],
+    size: 'medium',
+  });
   const { setEnabled } = useMagnifier();
 
   const handleSelectTea = (tea: BubbleTea) => {
@@ -93,8 +98,11 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: MenuScreenProps) {
           open={showCustomization}
           onClose={() => {
             setShowCustomization(false);
+            setEnabled(true);
           }}
           onAddToCart={onAddToCart}
+          customization={customization}
+          setCustomization={setCustomization}
         />
       )}
     </div>
