@@ -462,31 +462,6 @@ export function ManagerDashboard() {
               }}>
                 Generate Popular Items (X Report)
               </Button>
-
-              <Button onClick={async () => {
-                setReportsError(null);
-                setReportsLoading(true);
-                try {
-                  // today's range
-                  const now = new Date();
-                  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
-                  const startIso = startOfDay.toISOString();
-                  const endIso = endOfDay.toISOString();
-                  const data = await reportsApi.getOrdersByStatus(startIso, endIso);
-                  setStatusReport(data);
-                  // show only status
-                  setActiveReport('status');
-                  setSalesReport(null);
-                  setPopularReport(null);
-                  setStatusReportTime(new Date().toLocaleString());
-                } catch (err: any) {
-                  console.error('Status report error', err);
-                  setReportsError(err?.message || 'Failed to generate orders-by-status report');
-                } finally { setReportsLoading(false); }
-              }}>
-                Generate Orders-by-Status (Z Report)
-              </Button>
             </div>
 
             {reportsLoading && <div className="text-sm text-gray-600">Generating report...</div>}
