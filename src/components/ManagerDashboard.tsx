@@ -19,166 +19,167 @@ interface MenuItem {
 }
 
 export function ManagerDashboard() {
-  const { user } = useAuth();
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  // Reports state
-  const [reportsLoading, setReportsLoading] = useState(false);
-  const [reportsError, setReportsError] = useState<string | null>(null);
-  const [salesReport, setSalesReport] = useState<any | null>(null);
-  const [popularReport, setPopularReport] = useState<any[] | null>(null);
-  const [statusReport, setStatusReport] = useState<any[] | null>(null);
+            {reportError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{reportError}</AlertDescription>
+              </Alert>
+            )}
 
-  // Sales date range state
-  const [salesStartDate, setSalesStartDate] = useState('');
-  const [salesEndDate, setSalesEndDate] = useState('');
+            {/* Sales/X controls moved here so Reports tab contains all report actions */}
+            <div className="flex gap-3 mb-4 items-end">
+              <div className="flex items-center gap-2">
+                <label className="text-sm">Sales From</label>
+                <Input
+                  type="date"
+                  value={salesStartDate}
+                  onChange={(e) => setSalesStartDate(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm">To</label>
+                <Input
+                  type="date"
+                  value={salesEndDate}
+                  onChange={(e) => setSalesEndDate(e.target.value)}
+                />
+              </div>
+            </div>
 
-  // Report timestamps for X/Z reports
-  const [popularReportTime, setPopularReportTime] = useState<string | null>(null);
-  const [statusReportTime, setStatusReportTime] = useState<string | null>(null);
-  // Which report is currently shown: 'sales' | 'popular' | 'status' | null
-  const [activeReport, setActiveReport] = useState<'sales' | 'popular' | 'status' | null>(null);
+            <div className="flex gap-3 mb-4">
+              <Button onClick={async () => {
+                setReportsError(null);
+                setReportsLoading(true);
+                try {
+                  let data;
+                  if (salesStartDate && salesEndDate) {
+                    const startIso = new Date(salesStartDate + 'T00:00:00').toISOString();
+                    const endIso = new Date(salesEndDate + 'T23:59:59.999').toISOString();
+                    console.log('Sales request range:', { startIso, endIso });
+                    data = await reportsApi.getSalesSummary(startIso, endIso);
+                  } else {
+                    console.log('Sales request without range');
+                    data = await reportsApi.getSalesSummary();
+                  }
+                  console.log('Sales report payload:', data);
+                  setSalesReport(data);
+                  // show only sales
+                  setActiveReport('sales');
+                  setPopularReport(null);
+                  setStatusReport(null);
+                } catch (err: any) {
+                  console.error('Sales report error', err);
+                  setReportsError(err?.message || 'Failed to generate sales report');
+                } finally { setReportsLoading(false); }
+              }}>
+                Generate Sales Report
+              </Button>
 
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    basePrice: '',
-    image: '',
-    category: 'milk-tea',
-  });
+              <Button onClick={async () => {
+                setReportsError(null);
+                setReportsLoading(true);
+                try {
+                  // compute today's range explicitly
+                  const now = new Date();
+                  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+                  const startIso = startOfDay.toISOString();
+                  const endIso = endOfDay.toISOString();
+                  const data = await reportsApi.getPopularDrinks(startIso, endIso);
+                  setPopularReport(data);
+                  // show only popular
+                  setActiveReport('popular');
+                  setSalesReport(null);
+                  setStatusReport(null);
+                  setPopularReportTime(new Date().toLocaleString());
+                } catch (err: any) {
+                  console.error('Popular report error', err);
+                  setReportsError(err?.message || 'Failed to generate popular items report');
+                } finally { setReportsLoading(false); }
+              }}>
+                Generate X Report for Today
+              </Button>
+            </div>
 
-  // User management state
-  const [managers, setManagers] = useState<Manager[]>([]);
-  const [newUserEmail, setNewUserEmail] = useState('');
-  const [userError, setUserError] = useState<string | null>(null);
-  const [userSuccess, setUserSuccess] = useState<string | null>(null);
-  const [isLoadingManagers, setIsLoadingManagers] = useState(false);
+            {reportsLoading && <div className="text-sm text-gray-600">Generating report...</div>}
 
-  // Inventory management state
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [isLoadingInventory, setIsLoadingInventory] = useState(false);
-  const [inventoryError, setInventoryError] = useState<string | null>(null);
-  const [inventorySuccess, setInventorySuccess] = useState<string | null>(null);
-  const [showAddInventoryForm, setShowAddInventoryForm] = useState(false);
-  const [editingInventoryItem, setEditingInventoryItem] = useState<InventoryItem | null>(null);
-  const [inventoryFormData, setInventoryFormData] = useState({
-    ingredient_name: '',
-    quantity: '',
-    unit: 'kg',
-    min_quantity: '10',
-  });
+            {activeReport === 'sales' && salesReport && (
+              <div className="mt-4">
+                <h4 className="font-semibold">Sales Summary</h4>
+                {salesReport.applied_range && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    Applied Range: {new Date(salesReport.applied_range.start).toLocaleString()} — {new Date(salesReport.applied_range.end).toLocaleString()}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Total Orders</p>
+                    <p className="text-2xl font-bold">{Number(salesReport.total_orders || 0)}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Total Revenue</p>
+                    <p className="text-2xl font-bold">${(parseFloat(salesReport.total_revenue || 0)).toFixed(2)}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Average Order</p>
+                    <p className="text-2xl font-bold">${(parseFloat(salesReport.avg_order_value || 0)).toFixed(2)}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <p className="text-sm text-gray-600">Order Dates</p>
+                    <p className="text-sm">
+                      {salesReport.first_order ? new Date(salesReport.first_order).toLocaleString() : '—'}
+                      <br />
+                      {salesReport.last_order ? new Date(salesReport.last_order).toLocaleString() : '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-  // Reports state
-  const [report, setReport] = useState<InventoryUsageReport | null>(null);
-  const [isLoadingReport, setIsLoadingReport] = useState(false);
-  const [reportError, setReportError] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+            {activeReport === 'popular' && popularReport && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold">Popular Items</h4>
+                  {popularReportTime && <div className="text-sm text-gray-500">As of: {popularReportTime}</div>}
+                </div>
+                <table className="w-full text-sm mt-2 border-collapse">
+                  <thead>
+                    <tr className="text-left border-b"><th>Name</th><th>Times Ordered</th><th>Total Quantity</th></tr>
+                  </thead>
+                  <tbody>
+                    {popularReport.map((r) => (
+                      <tr key={r.id} className="border-b odd:bg-white even:bg-gray-50">
+                        <td className="py-2">{r.name}</td>
+                        <td className="py-2">{r.times_ordered}</td>
+                        <td className="py-2">{r.total_quantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-  useEffect(() => {
-    console.log('ManagerDashboard mounted, loading data...');
-    loadMenuItems().catch(err => {
-      console.error('Failed to load menu items in useEffect:', err);
-    });
-    loadManagers().catch(err => {
-      console.error('Failed to load managers in useEffect:', err);
-    });
-    loadInventory().catch(err => {
-      console.error('Failed to load inventory in useEffect:', err);
-    });
-  }, []);
-
-  const loadMenuItems = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const items = await menuApi.getAll();
-      // Ensure basePrice is a number
-      const normalizedItems = items.map(item => ({
-        ...item,
-        basePrice: typeof item.basePrice === 'string' ? parseFloat(item.basePrice) : item.basePrice
-      }));
-      setMenuItems(normalizedItems);
-      console.log('Menu items loaded successfully:', normalizedItems);
-    } catch (err) {
-      console.error('Error loading menu items:', err);
-      setError('Failed to load menu items from server. You can still add new items.');
-      setMenuItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadManagers = async () => {
-    try {
-      setIsLoadingManagers(true);
-      setUserError(null);
-      const managerList = await managersApi.getAll();
-      setManagers(managerList);
-      console.log('Managers loaded successfully:', managerList);
-    } catch (err) {
-      console.error('Error loading managers:', err);
-      setUserError('Failed to load managers from server.');
-      setManagers([]);
-    } finally {
-      setIsLoadingManagers(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const itemData = {
-        name: formData.name,
-        description: formData.description,
-        basePrice: parseFloat(formData.basePrice),
-        image: formData.image,
-        category: formData.category,
-      };
-
-      if (editingItem) {
-        await menuApi.update(editingItem.id, itemData);
-        setSuccess('Menu item updated successfully!');
-      } else {
-        await menuApi.create(itemData);
-        setSuccess('Menu item added successfully!');
-      }
-
-      resetForm();
-      await loadMenuItems();
-    } catch (err) {
-      setError(editingItem ? 'Failed to update menu item' : 'Failed to add menu item');
-      console.error(err);
-    }
-  };
-
-  const handleEdit = (item: MenuItem) => {
-    setEditingItem(item);
-    setFormData({
-      name: item.name,
-      description: item.description,
-      basePrice: item.basePrice.toString(),
-      image: item.image,
-      category: item.category,
-    });
-    setShowAddForm(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this menu item?')) {
-      return;
-    }
-
-    try {
+            {activeReport === 'status' && statusReport && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold">Orders by Status</h4>
+                  {statusReportTime && <div className="text-sm text-gray-500">As of: {statusReportTime}</div>}
+                </div>
+                <table className="w-full text-sm mt-2 border-collapse">
+                  <thead>
+                    <tr className="text-left border-b"><th>Status</th><th>Count</th><th>Total Value</th></tr>
+                  </thead>
+                  <tbody>
+                    {statusReport.map((s, idx) => (
+                      <tr key={idx} className="border-b odd:bg-white even:bg-gray-50">
+                        <td className="py-2">{s.status}</td>
+                        <td className="py-2">{s.count}</td>
+                        <td className="py-2">${parseFloat(s.total_value || 0).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
       setError(null);
       await menuApi.delete(id);
       setSuccess('Menu item deleted successfully!');
@@ -377,176 +378,7 @@ export function ManagerDashboard() {
           <h1 className="text-4xl font-bold mb-2">Manager Dashboard</h1>
           <p className="text-gray-600">Welcome, {user?.name || 'Manager'}</p>
         </div>
-        {/* Reports Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Reports</CardTitle>
-            <CardDescription>Generate database reports (sales, popular items, order status)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {reportsError && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{reportsError}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex gap-3 mb-4 items-end">
-              <div className="flex items-center gap-2">
-                <label className="text-sm">Sales From</label>
-                <Input
-                  type="date"
-                  value={salesStartDate}
-                  onChange={(e) => setSalesStartDate(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm">To</label>
-                <Input
-                  type="date"
-                  value={salesEndDate}
-                  onChange={(e) => setSalesEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mb-4">
-              <Button onClick={async () => {
-                setReportsError(null);
-                setReportsLoading(true);
-                try {
-                  let data;
-                  if (salesStartDate && salesEndDate) {
-                    const startIso = new Date(salesStartDate + 'T00:00:00').toISOString();
-                    const endIso = new Date(salesEndDate + 'T23:59:59.999').toISOString();
-                    console.log('Sales request range:', { startIso, endIso });
-                    data = await reportsApi.getSalesSummary(startIso, endIso);
-                  } else {
-                    console.log('Sales request without range');
-                    data = await reportsApi.getSalesSummary();
-                  }
-                  console.log('Sales report payload:', data);
-                  setSalesReport(data);
-                  // show only sales
-                  setActiveReport('sales');
-                  setPopularReport(null);
-                  setStatusReport(null);
-                } catch (err: any) {
-                  console.error('Sales report error', err);
-                  setReportsError(err?.message || 'Failed to generate sales report');
-                } finally { setReportsLoading(false); }
-              }}>
-                Generate Sales Report
-              </Button>
-
-              <Button onClick={async () => {
-                setReportsError(null);
-                setReportsLoading(true);
-                try {
-                  // compute today's range explicitly
-                  const now = new Date();
-                  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
-                  const startIso = startOfDay.toISOString();
-                  const endIso = endOfDay.toISOString();
-                  const data = await reportsApi.getPopularDrinks(startIso, endIso);
-                  setPopularReport(data);
-                  // show only popular
-                  setActiveReport('popular');
-                  setSalesReport(null);
-                  setStatusReport(null);
-                  setPopularReportTime(new Date().toLocaleString());
-                } catch (err: any) {
-                  console.error('Popular report error', err);
-                  setReportsError(err?.message || 'Failed to generate popular items report');
-                } finally { setReportsLoading(false); }
-              }}>
-                Generate X Report for Today
-              </Button>
-            </div>
-
-            {reportsLoading && <div className="text-sm text-gray-600">Generating report...</div>}
-
-            {activeReport === 'sales' && salesReport && (
-              <div className="mt-4">
-                <h4 className="font-semibold">Sales Summary</h4>
-                {salesReport.applied_range && (
-                  <div className="mt-1 text-sm text-gray-600">
-                    Applied Range: {new Date(salesReport.applied_range.start).toLocaleString()} — {new Date(salesReport.applied_range.end).toLocaleString()}
-                  </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
-                  <div className="p-4 bg-gray-50 rounded">
-                    <p className="text-sm text-gray-600">Total Orders</p>
-                    <p className="text-2xl font-bold">{Number(salesReport.total_orders || 0)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded">
-                    <p className="text-sm text-gray-600">Total Revenue</p>
-                    <p className="text-2xl font-bold">${(parseFloat(salesReport.total_revenue || 0)).toFixed(2)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded">
-                    <p className="text-sm text-gray-600">Average Order</p>
-                    <p className="text-2xl font-bold">${(parseFloat(salesReport.avg_order_value || 0)).toFixed(2)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded">
-                    <p className="text-sm text-gray-600">Order Dates</p>
-                    <p className="text-sm">
-                      {salesReport.first_order ? new Date(salesReport.first_order).toLocaleString() : '—'}
-                      <br />
-                      {salesReport.last_order ? new Date(salesReport.last_order).toLocaleString() : '—'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeReport === 'popular' && popularReport && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">Popular Items</h4>
-                  {popularReportTime && <div className="text-sm text-gray-500">As of: {popularReportTime}</div>}
-                </div>
-                <table className="w-full text-sm mt-2 border-collapse">
-                  <thead>
-                    <tr className="text-left border-b"><th>Name</th><th>Times Ordered</th><th>Total Quantity</th></tr>
-                  </thead>
-                  <tbody>
-                    {popularReport.map((r) => (
-                      <tr key={r.id} className="border-b odd:bg-white even:bg-gray-50">
-                        <td className="py-2">{r.name}</td>
-                        <td className="py-2">{r.times_ordered}</td>
-                        <td className="py-2">{r.total_quantity}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {activeReport === 'status' && statusReport && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">Orders by Status</h4>
-                  {statusReportTime && <div className="text-sm text-gray-500">As of: {statusReportTime}</div>}
-                </div>
-                <table className="w-full text-sm mt-2 border-collapse">
-                  <thead>
-                    <tr className="text-left border-b"><th>Status</th><th>Count</th><th>Total Value</th></tr>
-                  </thead>
-                  <tbody>
-                    {statusReport.map((s, idx) => (
-                      <tr key={idx} className="border-b odd:bg-white even:bg-gray-50">
-                        <td className="py-2">{s.status}</td>
-                        <td className="py-2">{s.count}</td>
-                        <td className="py-2">${parseFloat(s.total_value || 0).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-          </CardContent>
-        </Card>
+        
 
         <Tabs defaultValue="menu" className="w-full">
           <TabsList className="!flex !gap-4 !mb-6 !bg-transparent !h-auto !p-0 !w-fit">
