@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { menuApi, managersApi, Manager } from '../services/api';
+import { menuApi, managersApi, Manager, inventoryApi, InventoryItem, InventoryUsageReport, reportsApi } from '../services/api';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { ManagerHeader } from './ManagerHeader';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 interface MenuItem {
   id: string;
@@ -25,6 +26,22 @@ export function ManagerDashboard() {
   const [success, setSuccess] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  // Reports state
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState<string | null>(null);
+  const [salesReport, setSalesReport] = useState<any | null>(null);
+  const [popularReport, setPopularReport] = useState<any[] | null>(null);
+  const [statusReport, setStatusReport] = useState<any[] | null>(null);
+
+  // Sales date range state
+  const [salesStartDate, setSalesStartDate] = useState('');
+  const [salesEndDate, setSalesEndDate] = useState('');
+
+  // Report timestamps for X/Z reports
+  const [popularReportTime, setPopularReportTime] = useState<string | null>(null);
+  const [statusReportTime, setStatusReportTime] = useState<string | null>(null);
+  // Which report is currently shown: 'sales' | 'popular' | 'status' | null
+  const [activeReport, setActiveReport] = useState<'sales' | 'popular' | 'status' | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -42,13 +59,37 @@ export function ManagerDashboard() {
   const [userSuccess, setUserSuccess] = useState<string | null>(null);
   const [isLoadingManagers, setIsLoadingManagers] = useState(false);
 
+  // Inventory management state
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [isLoadingInventory, setIsLoadingInventory] = useState(false);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [inventorySuccess, setInventorySuccess] = useState<string | null>(null);
+  const [showAddInventoryForm, setShowAddInventoryForm] = useState(false);
+  const [editingInventoryItem, setEditingInventoryItem] = useState<InventoryItem | null>(null);
+  const [inventoryFormData, setInventoryFormData] = useState({
+    ingredient_name: '',
+    quantity: '',
+    unit: 'kg',
+    min_quantity: '10',
+  });
+
+  // Reports state
+  const [report, setReport] = useState<InventoryUsageReport | null>(null);
+  const [isLoadingReport, setIsLoadingReport] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   useEffect(() => {
-    console.log('ManagerDashboard mounted, loading menu items and managers...');
+    console.log('ManagerDashboard mounted, loading data...');
     loadMenuItems().catch(err => {
       console.error('Failed to load menu items in useEffect:', err);
     });
     loadManagers().catch(err => {
       console.error('Failed to load managers in useEffect:', err);
+    });
+    loadInventory().catch(err => {
+      console.error('Failed to load inventory in useEffect:', err);
     });
   }, []);
 
@@ -210,6 +251,121 @@ export function ManagerDashboard() {
     }
   };
 
+  // Inventory management functions
+  const loadInventory = async () => {
+    try {
+      setIsLoadingInventory(true);
+      setInventoryError(null);
+      const items = await inventoryApi.getAll();
+      setInventory(items);
+      console.log('Inventory loaded successfully:', items);
+    } catch (err) {
+      console.error('Error loading inventory:', err);
+      setInventoryError('Failed to load inventory from server.');
+      setInventory([]);
+    } finally {
+      setIsLoadingInventory(false);
+    }
+  };
+
+  const handleInventorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInventoryError(null);
+    setInventorySuccess(null);
+
+    try {
+      const itemData = {
+        ingredient_name: inventoryFormData.ingredient_name,
+        quantity: parseFloat(inventoryFormData.quantity),
+        unit: inventoryFormData.unit,
+        min_quantity: parseFloat(inventoryFormData.min_quantity),
+      };
+
+      if (editingInventoryItem) {
+        await inventoryApi.update(editingInventoryItem.id, itemData);
+        setInventorySuccess('Inventory item updated successfully!');
+      } else {
+        await inventoryApi.add(itemData);
+        setInventorySuccess('Inventory item added successfully!');
+      }
+
+      resetInventoryForm();
+      await loadInventory();
+      setTimeout(() => setInventorySuccess(null), 3000);
+    } catch (err: any) {
+      setInventoryError(editingInventoryItem ? 'Failed to update inventory item' : 'Failed to add inventory item');
+      console.error(err);
+    }
+  };
+
+  const handleEditInventory = (item: InventoryItem) => {
+    setEditingInventoryItem(item);
+    setInventoryFormData({
+      ingredient_name: item.ingredient_name,
+      quantity: item.quantity.toString(),
+      unit: item.unit,
+      min_quantity: item.min_quantity.toString(),
+    });
+    setShowAddInventoryForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteInventory = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to delete ${name}?`)) {
+      return;
+    }
+
+    try {
+      setInventoryError(null);
+      await inventoryApi.delete(id);
+      setInventorySuccess('Inventory item deleted successfully!');
+      await loadInventory();
+      setTimeout(() => setInventorySuccess(null), 3000);
+    } catch (err) {
+      setInventoryError('Failed to delete inventory item');
+      console.error(err);
+    }
+  };
+
+  const resetInventoryForm = () => {
+    setShowAddInventoryForm(false);
+    setEditingInventoryItem(null);
+    setInventoryFormData({
+      ingredient_name: '',
+      quantity: '',
+      unit: 'kg',
+      min_quantity: '10',
+    });
+  };
+
+  // Reports functions
+  const handleGenerateReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReportError(null);
+    setReport(null);
+
+    if (!startDate || !endDate) {
+      setReportError('Please select both start and end dates');
+      return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+      setReportError('Start date must be before end date');
+      return;
+    }
+
+    try {
+      setIsLoadingReport(true);
+      const reportData = await inventoryApi.getUsageReport(startDate, endDate);
+      setReport(reportData);
+    } catch (err: any) {
+      console.error('Error generating report:', err);
+      setReportError(err.message || 'Failed to generate report');
+    } finally {
+      setIsLoadingReport(false);
+    }
+  };
+
   console.log('ManagerDashboard rendering, user:', user, 'isLoading:', isLoading, 'menuItems:', menuItems.length);
 
   try {
@@ -222,19 +378,49 @@ export function ManagerDashboard() {
           <p className="text-gray-600">Welcome, {user?.name || 'Manager'}</p>
         </div>
 
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+        <Tabs defaultValue="menu" className="w-full">
+          <TabsList className="!flex !gap-4 !mb-6 !bg-transparent !h-auto !p-0 !w-fit">
+            <TabsTrigger 
+              value="menu"
+              className="!bg-transparent !text-blue-800 hover:!bg-blue-50 data-[state=active]:!bg-blue-100 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-2 !border-blue-600"
+            >
+              Menu Items
+            </TabsTrigger>
+            <TabsTrigger 
+              value="inventory"
+              className="!bg-transparent !text-blue-800 hover:!bg-blue-50 data-[state=active]:!bg-blue-100 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-2 !border-blue-600"
+            >
+              Inventory
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reports"
+              className="!bg-transparent !text-blue-800 hover:!bg-blue-50 data-[state=active]:!bg-blue-100 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-2 !border-blue-600"
+            >
+              Reports
+            </TabsTrigger>
+            <TabsTrigger 
+              value="users"
+              className="!bg-transparent !text-blue-800 hover:!bg-blue-50 data-[state=active]:!bg-blue-100 !px-6 !py-3 !rounded-md !font-medium !transition-all !shadow-md !border-2 !border-blue-600"
+            >
+              User Management
+            </TabsTrigger>
+          </TabsList>
 
-        {success && (
-          <Alert className="mb-4 bg-green-50 text-green-900 border-green-200">
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
+          {/* Menu Items Tab */}
+          <TabsContent value="menu">
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-        {/* Add/Edit Form */}
+            {success && (
+              <Alert className="mb-4 bg-green-50 text-green-900 border-green-200">
+                <AlertDescription>{success}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Add/Edit Form */}
         {showAddForm && (
           <Card className="mb-6">
             <CardHeader>
@@ -416,14 +602,519 @@ export function ManagerDashboard() {
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
 
-        {/* User Management Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>User Management</CardTitle>
-            <CardDescription>Add and manage authorized users</CardDescription>
-          </CardHeader>
-          <CardContent>
+          {/* Inventory Tab */}
+          <TabsContent value="inventory">
+            {inventoryError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{inventoryError}</AlertDescription>
+              </Alert>
+            )}
+
+            {inventorySuccess && (
+              <Alert className="mb-4 bg-green-50 text-green-900 border-green-200">
+                <AlertDescription>{inventorySuccess}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Add/Edit Inventory Form */}
+            {showAddInventoryForm && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>{editingInventoryItem ? 'Edit Inventory Item' : 'Add New Inventory Item'}</CardTitle>
+                  <CardDescription>
+                    {editingInventoryItem ? 'Update the inventory item details' : 'Add a new ingredient to inventory'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleInventorySubmit} className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="ingredient_name">Ingredient Name</Label>
+                      <Input
+                        id="ingredient_name"
+                        value={inventoryFormData.ingredient_name}
+                        onChange={(e) => setInventoryFormData({ ...inventoryFormData, ingredient_name: e.target.value })}
+                        placeholder="e.g., Milk, Sugar, Tea"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="quantity">Quantity</Label>
+                        <Input
+                          id="quantity"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={inventoryFormData.quantity}
+                          onChange={(e) => setInventoryFormData({ ...inventoryFormData, quantity: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="unit">Unit</Label>
+                        <select
+                          id="unit"
+                          value={inventoryFormData.unit}
+                          onChange={(e) => setInventoryFormData({ ...inventoryFormData, unit: e.target.value })}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          required
+                        >
+                          <option value="kg">Kilograms (kg)</option>
+                          <option value="liters">Liters</option>
+                          <option value="units">Units</option>
+                          <option value="grams">Grams</option>
+                          <option value="ml">Milliliters (ml)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="min_quantity">Minimum Quantity (Alert Threshold)</Label>
+                      <Input
+                        id="min_quantity"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={inventoryFormData.min_quantity}
+                        onChange={(e) => setInventoryFormData({ ...inventoryFormData, min_quantity: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button type="submit">{editingInventoryItem ? 'Update' : 'Add'} Item</Button>
+                      <Button type="button" variant="outline" onClick={resetInventoryForm}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Inventory Items List */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold">Inventory ({inventory.length})</h2>
+                {!showAddInventoryForm && (
+                  <Button onClick={() => setShowAddInventoryForm(true)}>Add New Item</Button>
+                )}
+              </div>
+
+              {isLoadingInventory ? (
+                <div className="text-center py-8">
+                  <div className="text-xl">Loading inventory...</div>
+                </div>
+              ) : inventory.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <p className="text-gray-600">No inventory items found. Add your first item!</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min. Quantity</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {inventory.map((item) => (
+                            <tr key={item.id} className={item.quantity <= item.min_quantity ? 'bg-red-50' : ''}>
+                              <td className="px-6 py-4 whitespace-nowrap font-medium">{item.ingredient_name}</td>
+                              <td className="px-6 py-4 whitespace-nowrap">{item.quantity} {item.unit}</td>
+                              <td className="px-6 py-4 whitespace-nowrap">{item.min_quantity} {item.unit}</td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {item.quantity <= item.min_quantity ? (
+                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    Low Stock
+                                  </span>
+                                ) : (
+                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    In Stock
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditInventory(item)}
+                                  className="mr-2"
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteInventory(item.id, item.ingredient_name)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  Delete
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Reports Tab */}
+          <TabsContent value="reports">
+            {reportsError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{reportsError}</AlertDescription>
+              </Alert>
+            )}
+
+            {reportError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{reportError}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Shared Date Range Picker for Sales & Inventory Usage */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Report Controls</CardTitle>
+                <CardDescription>Select dates and choose which report to generate</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-3 mb-4 items-end">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="reportStartDate" className="text-sm">Date Range From</Label>
+                    <Input
+                      id="reportStartDate"
+                      type="date"
+                      value={salesStartDate}
+                      onChange={(e) => setSalesStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="reportEndDate" className="text-sm">To</Label>
+                    <Input
+                      id="reportEndDate"
+                      type="date"
+                      value={salesEndDate}
+                      onChange={(e) => setSalesEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mb-4 flex-wrap">
+                  {/* Generate Sales Report */}
+                  <Button onClick={async () => {
+                    setReportsError(null);
+                    setReportsLoading(true);
+                    try {
+                      let data;
+                      if (salesStartDate && salesEndDate) {
+                        const startIso = new Date(salesStartDate + 'T00:00:00').toISOString();
+                        const endIso = new Date(salesEndDate + 'T23:59:59.999').toISOString();
+                        console.log('Sales request range:', { startIso, endIso });
+                        data = await reportsApi.getSalesSummary(startIso, endIso);
+                      } else {
+                        console.log('Sales request without range');
+                        data = await reportsApi.getSalesSummary();
+                      }
+                      console.log('Sales report payload:', data);
+                      setSalesReport(data);
+                      setActiveReport('sales');
+                      setPopularReport(null);
+                      setStatusReport(null);
+                    } catch (err: any) {
+                      console.error('Sales report error', err);
+                      setReportsError(err?.message || 'Failed to generate sales report');
+                    } finally {
+                      setReportsLoading(false);
+                    }
+                  }} disabled={reportsLoading}>
+                    Generate Sales Report
+                  </Button>
+
+                  {/* Generate X Report (Popular Items) */}
+                  <Button onClick={async () => {
+                    setReportsError(null);
+                    setReportsLoading(true);
+                    try {
+                      const now = new Date();
+                      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+                      const startIso = startOfDay.toISOString();
+                      const endIso = endOfDay.toISOString();
+                      const data = await reportsApi.getPopularDrinks(startIso, endIso);
+                      setPopularReport(data);
+                      setActiveReport('popular');
+                      setSalesReport(null);
+                      setStatusReport(null);
+                      setPopularReportTime(new Date().toLocaleString());
+                    } catch (err: any) {
+                      console.error('Popular report error', err);
+                      setReportsError(err?.message || 'Failed to generate popular items report');
+                    } finally {
+                      setReportsLoading(false);
+                    }
+                  }} disabled={reportsLoading}>
+                    Generate X Report (Popular Today)
+                  </Button>
+
+                  {/* Generate Inventory Usage Report */}
+                  <Button onClick={async () => {
+                    setReportError(null);
+                    setIsLoadingReport(true);
+                    try {
+                      if (!salesStartDate || !salesEndDate) {
+                        setReportError('Please select both start and end dates');
+                        setIsLoadingReport(false);
+                        return;
+                      }
+                      if (new Date(salesStartDate) > new Date(salesEndDate)) {
+                        setReportError('Start date must be before end date');
+                        setIsLoadingReport(false);
+                        return;
+                      }
+                      const reportData = await inventoryApi.getUsageReport(salesStartDate, salesEndDate);
+                      setReport(reportData);
+                      setActiveReport('inventory');
+                      setSalesReport(null);
+                      setPopularReport(null);
+                      setStatusReport(null);
+                    } catch (err: any) {
+                      console.error('Error generating inventory report:', err);
+                      setReportError(err.message || 'Failed to generate inventory usage report');
+                    } finally {
+                      setIsLoadingReport(false);
+                    }
+                  }} disabled={isLoadingReport || reportsLoading}>
+                    Generate Inventory Usage Report
+                  </Button>
+                </div>
+
+                {(reportsLoading || isLoadingReport) && (
+                  <div className="text-sm text-gray-600">Generating report...</div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Sales Report Display */}
+            {activeReport === 'sales' && salesReport && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Sales Summary</CardTitle>
+                  {salesReport.applied_range && (
+                    <CardDescription>
+                      Applied Range: {new Date(salesReport.applied_range.start).toLocaleString()} — {new Date(salesReport.applied_range.end).toLocaleString()}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">Total Orders</p>
+                      <p className="text-2xl font-bold">{Number(salesReport.total_orders || 0)}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">Total Revenue</p>
+                      <p className="text-2xl font-bold">${(parseFloat(salesReport.total_revenue || 0)).toFixed(2)}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">Average Order</p>
+                      <p className="text-2xl font-bold">${(parseFloat(salesReport.avg_order_value || 0)).toFixed(2)}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">Order Dates</p>
+                      <p className="text-sm">
+                        {salesReport.first_order ? new Date(salesReport.first_order).toLocaleString() : '—'}
+                        <br />
+                        {salesReport.last_order ? new Date(salesReport.last_order).toLocaleString() : '—'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Popular Items (X Report) Display */}
+            {activeReport === 'popular' && popularReport && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Popular Items Report (X Report)</CardTitle>
+                  {popularReportTime && (
+                    <CardDescription>As of: {popularReportTime}</CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="text-left border-b bg-gray-50">
+                          <th className="px-4 py-2">Item Name</th>
+                          <th className="px-4 py-2">Times Ordered</th>
+                          <th className="px-4 py-2">Total Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {popularReport.map((r) => (
+                          <tr key={r.id} className="border-b odd:bg-white even:bg-gray-50">
+                            <td className="px-4 py-2">{r.name}</td>
+                            <td className="px-4 py-2">{r.times_ordered}</td>
+                            <td className="px-4 py-2">{r.total_quantity}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Inventory Usage Report Display */}
+            {activeReport === 'inventory' && report && (
+              <>
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>Inventory Usage Report</CardTitle>
+                    <CardDescription>
+                      {new Date(report.dateRange.startDate).toLocaleDateString()} - {new Date(report.dateRange.endDate).toLocaleDateString()}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4">
+                      {report.reportType === 'detailed' ? (
+                        <>
+                          <div className="text-center p-4 bg-blue-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Items Used</p>
+                            <p className="text-3xl font-bold text-blue-800">{report.summary.itemsUsed || 0}</p>
+                          </div>
+                          <div className="text-center p-4 bg-green-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Total Cost</p>
+                            <p className="text-3xl font-bold text-green-800">${(report.summary.totalCost || 0).toFixed(2)}</p>
+                          </div>
+                          <div className="text-center p-4 bg-purple-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Total Units Used</p>
+                            <p className="text-3xl font-bold text-purple-800">{(report.summary.totalUnitsUsed || 0).toFixed(2)}</p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-center p-4 bg-blue-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Total Orders</p>
+                            <p className="text-3xl font-bold text-blue-800">{report.summary.totalOrders || 0}</p>
+                          </div>
+                          <div className="text-center p-4 bg-green-50 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+                            <p className="text-3xl font-bold text-green-800">${(report.summary.totalRevenue || 0).toFixed(2)}</p>
+                          </div>
+                          <div className="col-span-1 flex items-center justify-center">
+                            <Alert className="bg-yellow-50 border-yellow-200">
+                              <AlertDescription className="text-sm">{report.summary.message}</AlertDescription>
+                            </Alert>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {report.reportType === 'detailed' && report.items && report.items.length > 0 && (
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle>Detailed Usage Breakdown</CardTitle>
+                      <CardDescription>Item-by-item inventory usage details</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50 border-b">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Used</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Unit Cost</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage Count</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {report.items.map((item, index) => (
+                              <tr key={index} className={item.totalUsed > 0 ? '' : 'opacity-50'}>
+                                <td className="px-6 py-4 whitespace-nowrap font-medium">{item.ingredientName}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{item.totalUsed.toFixed(2)} {item.unit}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">${item.avgUnitCost.toFixed(2)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap font-semibold">${item.totalCost.toFixed(2)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{item.usageCount}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {report.reportType === 'basic' && report.currentInventory && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Current Inventory Snapshot</CardTitle>
+                      <CardDescription>Current inventory levels at time of report</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50 border-b">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingredient</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Quantity</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min. Quantity</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {report.currentInventory.map((item) => (
+                              <tr key={item.id}>
+                                <td className="px-6 py-4 whitespace-nowrap font-medium">{item.ingredient_name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{item.quantity} {item.unit}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{item.min_quantity} {item.unit}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  {item.quantity <= item.min_quantity ? (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                      Low Stock
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                      In Stock
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+          </TabsContent>
+
+          {/* User Management Tab */}
+          <TabsContent value="users">
             {userError && (
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>{userError}</AlertDescription>
@@ -436,24 +1127,30 @@ export function ManagerDashboard() {
               </Alert>
             )}
 
-            {/* Add User Form */}
-            <form onSubmit={handleAddUser} className="mb-6">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Input
-                    type="email"
-                    placeholder="Enter user email (e.g., user@example.com)"
-                    value={newUserEmail}
-                    onChange={(e) => setNewUserEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit">Add User</Button>
-              </div>
-            </form>
+            <Card>
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>Add and manage authorized users</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Add User Form */}
+                <form onSubmit={handleAddUser} className="mb-6">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Input
+                        type="email"
+                        placeholder="Enter user email (e.g., user@example.com)"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit">Add User</Button>
+                  </div>
+                </form>
 
-            {/* User List */}
-            <div>
+                {/* User List */}
+                <div>
               <h3 className="text-lg font-semibold mb-3">Authorized Managers ({managers.length})</h3>
               {isLoadingManagers ? (
                 <p className="text-gray-500 text-sm">Loading managers...</p>
@@ -479,9 +1176,11 @@ export function ManagerDashboard() {
                   ))}
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
     );
@@ -495,4 +1194,3 @@ export function ManagerDashboard() {
   }
 }
 
-//change

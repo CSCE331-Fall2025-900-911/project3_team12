@@ -33,10 +33,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Verify with backend first (this checks if user is a manager)
-      const apiUrl = import.meta.env.PROD 
-        ? '/api' 
-        : 'http://localhost:3001/api';
+      // Use the same API base resolution as the api.ts file
+      const getApiBase = () => {
+        const envUrl = import.meta.env.VITE_API_URL;
+        if (envUrl && envUrl.length > 0) return envUrl;
+        if (typeof window !== 'undefined') {
+          const host = window.location.hostname;
+          if (host === 'localhost' || host === '127.0.0.1') {
+            return 'http://localhost:3001/api';
+          }
+          return '/api';
+        }
+        return import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
+      };
+      
+      const apiUrl = getApiBase();
       
       const response = await fetch(`${apiUrl}/auth/google`, {
         method: 'POST',
@@ -47,8 +58,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Authentication failed');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Authentication failed');
+        } else {
+          // Server returned HTML or other non-JSON response (likely a routing error)
+          throw new Error('Server configuration error. Please ensure the backend is properly deployed.');
+        }
       }
 
       const backendData = await response.json();
@@ -102,3 +119,5 @@ export function useAuth() {
   }
   return context;
 }
+
+//test 

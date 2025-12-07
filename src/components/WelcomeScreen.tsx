@@ -1,6 +1,7 @@
 import { Button } from './ui/button';
 import logo from 'figma:asset/b5d7481338868fab8060868bddef0f79048a537c.png';
 import { useEffect, useState } from 'react';
+import { ImageOff } from "lucide-react";
 
 type Weather = {
   name: string;
@@ -10,9 +11,10 @@ type Weather = {
 
 interface WelcomeScreenProps {
   onStartOrder: () => void;
+  onStartOrderNoImages: () => void;
 }
 
-export function WelcomeScreen({ onStartOrder }: WelcomeScreenProps) {
+export function WelcomeScreen({ onStartOrder, onStartOrderNoImages }: WelcomeScreenProps) {
   const [weather, setWeather] = useState<Weather | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export function WelcomeScreen({ onStartOrder }: WelcomeScreenProps) {
         zIndex: 9999,
         }}
     >
-      🌐 Translate
+      Translate
        </button>
 
       <div className="text-center space-y-8 max-w-2xl">
@@ -104,6 +106,15 @@ export function WelcomeScreen({ onStartOrder }: WelcomeScreenProps) {
           </Button>
         </div>
       </div>
+         {/* No Images Button - Bottom Left */}
+      <Button
+        onClick={onStartOrderNoImages}
+        size="lg"
+        className="bg-white hover:bg-gray-100 text-primary border-2 border-primary px-6 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all z-50"
+        style={{ position: 'fixed', left: '2rem', bottom: '2rem' }}
+      >
+        Cashier Mode
+      </Button>
     </div>
   );
 }

@@ -53,6 +53,24 @@ export interface Manager {
   created_at?: string;
 }
 
+export interface InventoryItem {
+  id: number;
+  ingredient_name: string;
+  quantity: number;
+  unit: string;
+  min_quantity: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface InventoryUsageReport {
+  reportType: 'basic' | 'detailed';
+  dateRange: { startDate: string; endDate: string };
+  summary: any;
+  items?: any[];
+  currentInventory?: InventoryItem[];
+}
+
 // API Error Handler
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -101,7 +119,7 @@ export const menuApi = {
 
   // Update menu item (admin)
   async update(id: string, item: Partial<MenuItem>): Promise<MenuItem> {
-    const response = await fetch(`${API_BASE_URL}/menu?id=${id}`, {
+    const response = await fetch(`${API_BASE_URL}/menu/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
@@ -111,7 +129,7 @@ export const menuApi = {
 
   // Delete menu item (admin)
   async delete(id: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/menu?id=${id}`, {
+    const response = await fetch(`${API_BASE_URL}/menu/${id}`, {
       method: 'DELETE',
     });
     return handleResponse<{ message: string }>(response);
@@ -120,16 +138,24 @@ export const menuApi = {
 
 // Orders API
 export const ordersApi = {
-  // Get all orders
-  async getAll(): Promise<Order[]> {
-    const response = await fetch(`${API_BASE_URL}/orders`);
-    return handleResponse<Order[]>(response);
-  },
-
-  // Get single order
-  async getById(id: number): Promise<Order> {
-    const response = await fetch(`${API_BASE_URL}/orders?id=${id}`);
-    return handleResponse<Order>(response);
+  async getSalesSummary(start?: string, end?: string) {
+    const params = new URLSearchParams();
+    if (start && end) {
+      // Send both variants to be safe
+      params.set('start', start);
+      params.set('end', end);
+      params.set('startDate', start);
+      params.set('endDate', end);
+    }
+    // Cache-buster to avoid 304 and stale responses
+    params.set('_ts', String(Date.now()));
+    const qs = params.toString();
+    const url = `${API_BASE}/reports/sales${qs ? `?${qs}` : ''}`;
+    const res = await fetch(url, {
+      credentials: 'include',
+      headers: { 'Cache-Control': 'no-cache' },
+    });
+    return handleResponse(res);
   },
 
   // Create new order
@@ -200,6 +226,94 @@ export const healthApi = {
     const response = await fetch(`${API_BASE_URL}/health`);
     return handleResponse(response);
   },
+};
+
+// Reports API
+export const reportsApi = {
+  // Sales summary (optional start/end ISO strings)
+  async getSalesSummary(start?: string, end?: string): Promise<any> {
+    const params = new URLSearchParams();
+    if (start && end) {
+      params.set('start', start);
+      params.set('end', end);
+      // also include fallback names for compatibility
+      params.set('startDate', start);
+      params.set('endDate', end);
+    }
+    // Cache-buster to avoid 304 and stale responses
+    params.set('_ts', String(Date.now()));
+    const qs = params.toString();
+    const url = `${API_BASE_URL}/reports/sales${qs ? `?${qs}` : ''}`;
+    const response = await fetch(url, { headers: { 'Cache-Control': 'no-cache' } });
+    return handleResponse(response);
+  },
+
+  // Most popular drinks (optional start/end ISO strings). If not provided, server defaults to today.
+  async getPopularDrinks(start?: string, end?: string): Promise<any[]> {
+    let url = `${API_BASE_URL}/reports/popular`;
+    if (start && end) {
+      const params = new URLSearchParams();
+      params.set('start', start);
+      params.set('end', end);
+      params.set('startDate', start);
+      params.set('endDate', end);
+      url += `?${params.toString()}`;
+    }
+    const response = await fetch(url);
+    return handleResponse<any[]>(response);
+  },
+
+  // Orders grouped by status (optional start/end). If not provided, server defaults to today.
+  async getOrdersByStatus(start?: string, end?: string): Promise<any[]> {
+    let url = `${API_BASE_URL}/reports/status`;
+    if (start && end) {
+      const params = new URLSearchParams();
+      params.set('start', start);
+      params.set('end', end);
+      params.set('startDate', start);
+      params.set('endDate', end);
+      url += `?${params.toString()}`;
+    }
+    const response = await fetch(url);
+    return handleResponse<any[]>(response);
+  }
+};
+
+// Inventory API
+export const inventoryApi = {
+  async getAll(): Promise<InventoryItem[]> {
+    const response = await fetch(`${API_BASE_URL}/inventory`);
+    return handleResponse<InventoryItem[]>(response);
+  },
+  async getById(id: number): Promise<InventoryItem> {
+    const response = await fetch(`${API_BASE_URL}/inventory/${id}`);
+    return handleResponse<InventoryItem>(response);
+  },
+  async add(item: { ingredient_name: string; quantity: number; unit: string; min_quantity: number }): Promise<InventoryItem> {
+    const response = await fetch(`${API_BASE_URL}/inventory`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    return handleResponse<InventoryItem>(response);
+  },
+  async update(id: number, item: Partial<{ ingredient_name: string; quantity: number; unit: string; min_quantity: number }>): Promise<InventoryItem> {
+    const response = await fetch(`${API_BASE_URL}/inventory/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    return handleResponse<InventoryItem>(response);
+  },
+  async delete(id: number): Promise<{ message: string; ingredient_name?: string }> {
+    const response = await fetch(`${API_BASE_URL}/inventory/${id}`, { method: 'DELETE' });
+    return handleResponse(response);
+  },
+  async getUsageReport(startDate: string, endDate: string): Promise<InventoryUsageReport> {
+    const params = new URLSearchParams({ startDate, endDate });
+    const response = await fetch(`${API_BASE_URL}/inventory/reports/usage?${params.toString()}`);
+    return handleResponse<InventoryUsageReport>(response);
+  }
 };
 
 export { ApiError };
