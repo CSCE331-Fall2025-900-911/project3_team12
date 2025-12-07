@@ -195,7 +195,6 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
           open={showCustomization}
           onClose={() => {
             setShowCustomization(false);
-            setEnabled(true);
           }}
           onAddToCart={onAddToCart}
         />
