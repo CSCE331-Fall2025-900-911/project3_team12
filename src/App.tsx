@@ -112,13 +112,20 @@ export default function App() {
           <>
             <Magnifier />
             {currentScreen === 'welcome' && (
-              <div className="fixed top-6 left-6 z-50">
+              <div className="fixed top-6 left-6 z-50 flex flex-col gap-3">
                 <Button
                   onClick={toggleAppMode}
                   variant="outline"
                   className="shadow-lg px-6 py-3"
                 >
                   {appMode === 'kiosk' ? 'Manager Mode' : 'Kiosk Mode'}
+                </Button>
+                <Button
+                  onClick={handleStartOrderNoImages}
+                  variant="outline"
+                  className="shadow-lg px-6 py-3"
+                >
+                  Cashier Mode
                 </Button>
               </div>
             )}

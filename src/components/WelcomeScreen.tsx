@@ -106,15 +106,6 @@ export function WelcomeScreen({ onStartOrder, onStartOrderNoImages }: WelcomeScr
           </Button>
         </div>
       </div>
-         {/* No Images Button - Bottom Left */}
-      <Button
-        onClick={onStartOrderNoImages}
-        size="lg"
-        className="bg-white hover:bg-gray-100 text-primary border-2 border-primary px-6 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all z-50"
-        style={{ position: 'fixed', left: '2rem', bottom: '2rem' }}
-      >
-        Cashier Mode
-      </Button>
     </div>
   );
 }
