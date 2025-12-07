@@ -83,31 +83,6 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-yellow-50">
-      {/* Translate Button */}
-      <button
-        onClick={() => {
-          // call the function we exposed in index.html
-          (window as any).showGoogleTranslateUI?.();
-          // also ensure the container is visible (defensive)
-          const el = document.getElementById('google_translate_element');
-          if (el) el.style.display = 'block';
-        }}
-        style={{
-          position: 'fixed',
-          top: '1rem',
-          right: '1rem',
-          backgroundColor: '#facc15',
-          color: '#000',
-          padding: '0.5rem 1rem',
-          borderRadius: '0.5rem',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          zIndex: 9999,
-        }}
-      >
-        Translate
-      </button>
-
       {/* Header */}
       <div className="bg-white shadow-md sticky top-0 z-10 border-b-4 border-primary">
         <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
@@ -127,6 +102,22 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
             <p className="text-muted-foreground">Select your bubble tea</p>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                // call the function we exposed in index.html
+                (window as any).showGoogleTranslateUI?.();
+                // also ensure the container is visible (defensive)
+                const el = document.getElementById('google_translate_element');
+                if (el) el.style.display = 'block';
+              }}
+              className="px-4 py-2 text-sm font-bold rounded-md cursor-pointer"
+              style={{
+                backgroundColor: '#facc15',
+                color: '#000',
+              }}
+            >
+              Translate
+            </button>
             <div className="flex items-center gap-2">
               <label htmlFor="sort" className="text-sm font-medium text-gray-700">Sort by:</label>
               <select
