@@ -27,6 +27,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
   const [menuItems, setMenuItems] = useState<BubbleTea[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'none' | 'calories' | 'sugar' | 'protein'>('none');
   const { setEnabled } = useMagnifier();
 
   useEffect(() => {
@@ -67,6 +68,17 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
     setShowCustomization(true);
   };
 
+  const getSortedMenuItems = () => {
+    if (sortBy === 'none') return menuItems;
+    
+    return [...menuItems].sort((a, b) => {
+      if (sortBy === 'calories') return a.calories - b.calories;
+      if (sortBy === 'sugar') return a.sugar - b.sugar;
+      if (sortBy === 'protein') return b.protein - a.protein; // Descending for protein
+      return 0;
+    });
+  };
+
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
@@ -89,19 +101,35 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
             <h1 className="text-3xl text-primary">Machamp Tea House</h1>
             <p className="text-muted-foreground">Select your bubble tea</p>
           </div>
-          <Button
-            onClick={onViewCart}
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-white relative"
-          >
-            <ShoppingCart className="mr-2 h-5 w-5" />
-            View Cart
-            {cartItemCount > 0 && (
-              <Badge className="ml-2 bg-destructive hover:bg-destructive/90">
-                {cartItemCount}
-              </Badge>
-            )}
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label htmlFor="sort" className="text-sm font-medium text-gray-700">Sort by:</label>
+              <select
+                id="sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="none">None</option>
+                <option value="calories">Calories (Low to High)</option>
+                <option value="sugar">Sugar (Low to High)</option>
+                <option value="protein">Protein (High to Low)</option>
+              </select>
+            </div>
+            <Button
+              onClick={onViewCart}
+              size="lg"
+              className="bg-primary hover:bg-primary/90 text-white relative"
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              View Cart
+              {cartItemCount > 0 && (
+                <Badge className="ml-2 bg-destructive hover:bg-destructive/90">
+                  {cartItemCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -125,7 +153,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
             className={showImages ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "gap-4"} 
             style={!showImages ? { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', width: '100%', gridAutoRows: 'minmax(min-content, max-content)' } : undefined}
           >
-            {menuItems.map((tea) => (
+            {getSortedMenuItems().map((tea) => (
             <Card
               key={tea.id}
               className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col"
