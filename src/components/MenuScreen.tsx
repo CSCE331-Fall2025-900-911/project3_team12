@@ -67,15 +67,17 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
       <div className="bg-white shadow-md sticky top-0 z-10 border-b-4 border-primary">
         <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
           <div>
-            <Button
-              onClick={onBack}
-              variant="outline"
-              size="lg"
-              className="border-2 border-primary text-primary hover:bg-primary hover:text-white"
-            >
-              <ArrowLeft className="mr-2 h-5 w-5" />
-              Back
-            </Button>
+            {!showImages && (
+              <Button
+                onClick={onBack}
+                variant="outline"
+                size="lg"
+                className="border-2 border-primary text-primary hover:bg-primary hover:text-white"
+              >
+                <ArrowLeft className="mr-2 h-5 w-5" />
+                Back
+              </Button>
+            )}
             <h1 className="text-3xl text-primary">Machamp Tea House</h1>
             <p className="text-muted-foreground">Select your bubble tea</p>
           </div>
