@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { BubbleTea, CartItem, Customization } from '../types/types';
-import { menuApi } from '../services/api';
+import { useState, useRef } from 'react';
+import { BubbleTea, CartItem } from '../types/types';
+import { bubbleTeaMenu } from '../data/menu';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -19,49 +19,22 @@ interface MenuScreenProps {
 export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages = true }: MenuScreenProps) {
   const [selectedTea, setSelectedTea] = useState<BubbleTea | null>(null);
   const [showCustomization, setShowCustomization] = useState(false);
-  const [customization, setCustomization] = useState<Customization>({
-    sugarLevel: 'normal',
-    toppings: [],
-    size: 'medium',
-  });
-  const [menuItems, setMenuItems] = useState<BubbleTea[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { setEnabled } = useMagnifier();
-
-  useEffect(() => {
-    loadMenuItems();
-  }, []);
-
-  const loadMenuItems = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const items = await menuApi.getAll();
-      // Convert MenuItem to BubbleTea format
-      const convertedItems: BubbleTea[] = items.map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        basePrice: typeof item.basePrice === 'string' ? parseFloat(item.basePrice) : item.basePrice,
-        image: item.image,
-        category: item.category as 'milk-tea' | 'fruit-tea' | 'specialty'
-      }));
-      setMenuItems(convertedItems);
-    } catch (err) {
-      console.error('Error loading menu items:', err);
-      setError('Failed to load menu items');
-      setMenuItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const prevMagnifierStateRef = useRef<boolean>(false);
 
   const handleSelectTea = (tea: BubbleTea) => {
     setSelectedTea(tea);
-    // disable magnifier while customization dialog is open
+    // Store previous magnifier state and disable it while dialog is open
+    // We'll restore this state when the dialog closes
+    prevMagnifierStateRef.current = true; // mark that we disabled it
     setEnabled(false);
     setShowCustomization(true);
+  };
+
+  const handleCloseCustomization = () => {
+    setShowCustomization(false);
+    // Don't re-enable the magnifier; just close the dialog
+    // The user can click the magnifier button if they want it
   };
 
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
@@ -72,17 +45,15 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
       <div className="bg-white shadow-md sticky top-0 z-10 border-b-4 border-primary">
         <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
           <div>
-            {!showImages && (
-              <Button
-                onClick={onBack}
-                variant="outline"
-                size="lg"
-                className="border-2 border-primary text-primary hover:bg-primary hover:text-white"
-              >
-                <ArrowLeft className="mr-2 h-5 w-5" />
-                Back
-              </Button>
-            )}
+            <Button
+              onClick={onBack}
+              variant="outline"
+              size="lg"
+              className="border-2 border-primary text-primary hover:bg-primary hover:text-white"
+            >
+              <ArrowLeft className="mr-2 h-5 w-5" />
+              Back
+            </Button>
             <h1 className="text-3xl text-primary">Machamp Tea House</h1>
             <p className="text-muted-foreground">Select your bubble tea</p>
           </div>
@@ -104,25 +75,11 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
 
       {/* Menu Grid */}
       <div className={showImages ? "max-w-7xl mx-auto px-8 py-12" : "w-full px-8 py-12"}>
-        {isLoading ? (
-          <div className="text-center py-20">
-            <div className="text-xl text-gray-600">Loading menu...</div>
-          </div>
-        ) : error ? (
-          <div className="text-center py-20">
-            <div className="text-xl text-red-600">{error}</div>
-            <Button onClick={loadMenuItems} className="mt-4">Retry</Button>
-          </div>
-        ) : menuItems.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-xl text-gray-600">No menu items available</div>
-          </div>
-        ) : (
-          <div 
-            className={showImages ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "gap-4"} 
-            style={!showImages ? { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', width: '100%', gridAutoRows: 'minmax(min-content, max-content)' } : undefined}
-          >
-            {menuItems.map((tea) => (
+        <div 
+          className={showImages ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "gap-4"} 
+          style={!showImages ? { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', width: '100%', gridAutoRows: 'minmax(min-content, max-content)' } : undefined}
+        >
+          {bubbleTeaMenu.map((tea) => (
             <Card
               key={tea.id}
               className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col"
@@ -152,9 +109,8 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
                 </Button>
               </div>
             </Card>
-            ))}
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
       {/* Customization Dialog */}
@@ -162,16 +118,10 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
         <CustomizationDialog
           tea={selectedTea}
           open={showCustomization}
-          onClose={() => {
-            setShowCustomization(false);
-            setEnabled(true);
-          }}
+          onClose={handleCloseCustomization}
           onAddToCart={onAddToCart}
-          customization={customization}
-          setCustomization={setCustomization}
         />
       )}
     </div>
   );
 }
-// test after pulling from main
