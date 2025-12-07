@@ -96,7 +96,7 @@ export function WelcomeScreen({ onStartOrder, onStartOrderNoImages }: WelcomeScr
           </div>
         </div>
 
-        <div className="pt-8">
+        <div className="pt-8 space-y-3">
           <Button 
             onClick={onStartOrder}
             size="lg"
@@ -104,6 +104,9 @@ export function WelcomeScreen({ onStartOrder, onStartOrderNoImages }: WelcomeScr
           >
             Start Your Order
           </Button>
+          <p className="text-sm text-muted-foreground italic">
+            Hold to enable magnifier
+          </p>
         </div>
       </div>
     </div>
