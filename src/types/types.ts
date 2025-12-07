@@ -5,6 +5,9 @@ export interface BubbleTea {
   basePrice: number;
   image: string;
   category: 'milk-tea' | 'fruit-tea' | 'specialty';
+  calories: number;
+  sugar: number;
+  protein: number;
 }
 
 export interface Customization {

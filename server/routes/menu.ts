@@ -13,7 +13,10 @@ router.get('/', async (req: Request, res: Response) => {
         description, 
         base_price as "basePrice", 
         image_url as "image",
-        category
+        category,
+        calories,
+        sugar,
+        protein
       FROM menu_items
       ORDER BY category, name
     `);
@@ -35,7 +38,10 @@ router.get('/:id', async (req: Request, res: Response) => {
         description, 
         base_price as "basePrice", 
         image_url as "image",
-        category
+        category,
+        calories,
+        sugar,
+        protein
       FROM menu_items 
       WHERE id = $1`,
       [id]

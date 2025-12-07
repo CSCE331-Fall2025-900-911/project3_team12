@@ -102,6 +102,64 @@ export function CustomizationDialog({
     return total;
   };
 
+  const calculateNutrition = () => {
+    // Base nutrition from the tea (medium size, normal sugar)
+    let calories = tea.calories || 0;
+    let sugar = tea.sugar || 0;
+    let protein = tea.protein || 0;
+
+    // Size adjustments
+    const sizeMultipliers = {
+      small: 0.75,
+      medium: 1.0,
+      large: 1.3,
+    };
+    const sizeMultiplier = sizeMultipliers[customization.size];
+    calories *= sizeMultiplier;
+    sugar *= sizeMultiplier;
+    protein *= sizeMultiplier;
+
+    // Sugar level adjustments (affects calories and sugar)
+    const sugarMultipliers = {
+      'no-sugar': 0.5, // Still has natural sugars
+      'half-sugar': 0.75,
+      'normal': 1.0,
+    };
+    const sugarMultiplier = sugarMultipliers[customization.sugarLevel];
+    const sugarCalories = sugar * 4; // 4 calories per gram of sugar
+    calories = calories - sugarCalories + (sugarCalories * sugarMultiplier);
+    sugar *= sugarMultiplier;
+
+    // Topping adjustments (approximate values)
+    customization.toppings.forEach((toppingId) => {
+      const topping = availableToppings.find((t) => t.id === toppingId);
+      if (topping) {
+        // Approximate nutrition per topping
+        if (topping.name === 'Boba') {
+          calories += 80;
+          sugar += 20;
+          protein += 0.5;
+        } else if (topping.name === 'Lychee Jelly') {
+          calories += 60;
+          sugar += 15;
+          protein += 0.2;
+        } else if (topping.name === 'Pudding') {
+          calories += 100;
+          sugar += 18;
+          protein += 2;
+        }
+      }
+    });
+
+    return {
+      calories: Math.round(calories),
+      sugar: Math.round(sugar * 10) / 10,
+      protein: Math.round(protein * 10) / 10,
+    };
+  };
+
+  const nutrition = calculateNutrition();
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[65vh] p-4 flex flex-col">
@@ -200,6 +258,34 @@ export function CustomizationDialog({
                     </Label>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Nutrition Facts */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Nutrition Facts</Label>
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Calories</span>
+                    <span className="text-sm font-bold">{nutrition.calories} cal</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Sugar</span>
+                    <span className="text-sm font-bold">{nutrition.sugar}g</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Protein</span>
+                    <span className="text-sm font-bold">{nutrition.protein}g</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 italic">
+                  * Values based on selected size and sugar level
+                </p>
               </div>
             </div>
 
