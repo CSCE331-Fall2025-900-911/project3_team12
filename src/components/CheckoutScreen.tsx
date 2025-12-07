@@ -125,6 +125,31 @@ export function CheckoutScreen({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-yellow-50">
+      {/* Translate Button */}
+      <button
+        onClick={() => {
+          // call the function we exposed in index.html
+          (window as any).showGoogleTranslateUI?.();
+          // also ensure the container is visible (defensive)
+          const el = document.getElementById('google_translate_element');
+          if (el) el.style.display = 'block';
+        }}
+        style={{
+          position: 'fixed',
+          top: '1rem',
+          right: '1rem',
+          backgroundColor: '#facc15',
+          color: '#000',
+          padding: '0.5rem 1rem',
+          borderRadius: '0.5rem',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          zIndex: 9999,
+        }}
+      >
+        Translate
+      </button>
+
       {/* Header */}
       <div className="bg-white shadow-md border-b-4 border-primary">
         <div className="max-w-4xl mx-auto px-8 py-6">
