@@ -82,11 +82,11 @@ INSERT INTO menu_items (name, description, base_price, image_url, category) VALU
 ('Protein Shake Milk Tea', 'Energizing protein-infused milk tea', 9.75, 'https://images.unsplash.com/photo-1622485831138-b6891b568a97', 'milk-tea'),
 ('Ice Blend Latte', 'Smooth blended iced latte', 6.25, 'https://images.unsplash.com/photo-1565600587185-6883f2725f73', 'specialty'),
 ('Winter Melon Green Tea', 'Sweet winter melon with green tea', 8.25, 'https://images.unsplash.com/photo-1722478347147-7238a01b78d3', 'fruit-tea'),
-('Passionfruit Green Tea', 'Tangy passionfruit with green tea', 7.25, 'https://images.unsplash.com/photo-1717615720953-300770cd5831', 'fruit-tea'),
-('Mango Green Tea', 'Fresh mango with green tea', 3.25, 'https://images.unsplash.com/photo-1717615720953-300770cd5831', 'fruit-tea'),
+('Passionfruit Green Tea', 'Tangy passionfruit with green tea', 7.25, 'https://vintagekitchennotes.com/wp-content/uploads/2023/07/Tall-glasses-of-passionfruit-tea.jpeg', 'fruit-tea'),
+('Mango Green Tea', 'Fresh mango with green tea', 3.25, 'https://takestwoeggs.com/wp-content/uploads/2021/10/Mango-Green-Tea-Takestwoeggs-sq.jpg', 'fruit-tea'),
 ('Strawberry Lemonade Tea', 'Sweet strawberry with refreshing lemonade', 3.25, 'https://images.unsplash.com/photo-1573500883698-e3ef47a95feb', 'fruit-tea'),
-('Strawberry Matcha', 'Strawberry paired with premium matcha', 7.25, 'https://images.unsplash.com/photo-1573500883698-e3ef47a95feb', 'specialty'),
-('Peach Oolong Tea', 'Juicy peach with smooth oolong', 7.25, 'https://images.unsplash.com/photo-1717615720953-300770cd5831', 'fruit-tea'),
+('Strawberry Matcha', 'Strawberry paired with premium matcha', 7.25, 'https://www.acozykitchen.com/wp-content/uploads/2025/03/StrawberryMatchaLatte-1.jpg', 'specialty'),
+('Peach Oolong Tea', 'Juicy peach with smooth oolong', 7.25, 'https://www.dessertfortwo.com/wp-content/uploads/2012/04/peach-iced-tea-3.jpg', 'fruit-tea'),
 ('Secret Matcha', 'Our exclusive premium matcha blend', 69.25, 'https://images.unsplash.com/photo-1722478347147-7238a01b78d3', 'specialty');
 
 -- Insert toppings
