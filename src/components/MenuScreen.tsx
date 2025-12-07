@@ -45,7 +45,10 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
         description: item.description,
         basePrice: typeof item.basePrice === 'string' ? parseFloat(item.basePrice) : item.basePrice,
         image: item.image,
-        category: item.category as 'milk-tea' | 'fruit-tea' | 'specialty'
+        category: item.category as 'milk-tea' | 'fruit-tea' | 'specialty',
+        calories: item.calories || 0,
+        sugar: typeof item.sugar === 'string' ? parseFloat(item.sugar) : (item.sugar || 0),
+        protein: typeof item.protein === 'string' ? parseFloat(item.protein) : (item.protein || 0)
       }));
       setMenuItems(convertedItems);
     } catch (err) {
@@ -167,8 +170,6 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
             setEnabled(true);
           }}
           onAddToCart={onAddToCart}
-          customization={customization}
-          setCustomization={setCustomization}
         />
       )}
     </div>
