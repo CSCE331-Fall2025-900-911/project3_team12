@@ -377,176 +377,6 @@ export function ManagerDashboard() {
           <h1 className="text-4xl font-bold mb-2">Manager Dashboard</h1>
           <p className="text-gray-600">Welcome, {user?.name || 'Manager'}</p>
         </div>
-        {/* Reports Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Reports</CardTitle>
-            <CardDescription>Generate database reports (sales, popular items, order status)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {reportsError && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{reportsError}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex gap-3 mb-4 items-end">
-              <div className="flex items-center gap-2">
-                <label className="text-sm">Sales From</label>
-                <Input
-                  type="date"
-                  value={salesStartDate}
-                  onChange={(e) => setSalesStartDate(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm">To</label>
-                <Input
-                  type="date"
-                  value={salesEndDate}
-                  onChange={(e) => setSalesEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mb-4">
-              <Button onClick={async () => {
-                setReportsError(null);
-                setReportsLoading(true);
-                try {
-                  let data;
-                  if (salesStartDate && salesEndDate) {
-                    const startIso = new Date(salesStartDate + 'T00:00:00').toISOString();
-                    const endIso = new Date(salesEndDate + 'T23:59:59.999').toISOString();
-                    console.log('Sales request range:', { startIso, endIso });
-                    data = await reportsApi.getSalesSummary(startIso, endIso);
-                  } else {
-                    console.log('Sales request without range');
-                    data = await reportsApi.getSalesSummary();
-                  }
-                  console.log('Sales report payload:', data);
-                  setSalesReport(data);
-                  // show only sales
-                  setActiveReport('sales');
-                  setPopularReport(null);
-                  setStatusReport(null);
-                } catch (err: any) {
-                  console.error('Sales report error', err);
-                  setReportsError(err?.message || 'Failed to generate sales report');
-                } finally { setReportsLoading(false); }
-              }}>
-                Generate Sales Report
-              </Button>
-
-              <Button onClick={async () => {
-                setReportsError(null);
-                setReportsLoading(true);
-                try {
-                  // compute today's range explicitly
-                  const now = new Date();
-                  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                  const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
-                  const startIso = startOfDay.toISOString();
-                  const endIso = endOfDay.toISOString();
-                  const data = await reportsApi.getPopularDrinks(startIso, endIso);
-                  setPopularReport(data);
-                  // show only popular
-                  setActiveReport('popular');
-                  setSalesReport(null);
-                  setStatusReport(null);
-                  setPopularReportTime(new Date().toLocaleString());
-                } catch (err: any) {
-                  console.error('Popular report error', err);
-                  setReportsError(err?.message || 'Failed to generate popular items report');
-                } finally { setReportsLoading(false); }
-              }}>
-                Generate Popular Items (X Report)
-              </Button>
-            </div>
-
-            {reportsLoading && <div className="text-sm text-gray-600">Generating report...</div>}
-
-            {activeReport === 'sales' && salesReport && (
-              <div className="mt-4">
-                <h4 className="font-semibold">Sales Summary</h4>
-                {salesReport.applied_range && (
-                  <div className="mt-1 text-sm text-gray-600">
-                    Applied Range: {new Date(salesReport.applied_range.start).toLocaleString()} — {new Date(salesReport.applied_range.end).toLocaleString()}
-                  </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
-                  <div className="p-4 bg-gray-50 rounded">
-                    <p className="text-sm text-gray-600">Total Orders</p>
-                    <p className="text-2xl font-bold">{Number(salesReport.total_orders || 0)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded">
-                    <p className="text-sm text-gray-600">Total Revenue</p>
-                    <p className="text-2xl font-bold">${(parseFloat(salesReport.total_revenue || 0)).toFixed(2)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded">
-                    <p className="text-sm text-gray-600">Average Order</p>
-                    <p className="text-2xl font-bold">${(parseFloat(salesReport.avg_order_value || 0)).toFixed(2)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded">
-                    <p className="text-sm text-gray-600">Order Dates</p>
-                    <p className="text-sm">
-                      {salesReport.first_order ? new Date(salesReport.first_order).toLocaleString() : '—'}
-                      <br />
-                      {salesReport.last_order ? new Date(salesReport.last_order).toLocaleString() : '—'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeReport === 'popular' && popularReport && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">Popular Items</h4>
-                  {popularReportTime && <div className="text-sm text-gray-500">As of: {popularReportTime}</div>}
-                </div>
-                <table className="w-full text-sm mt-2 border-collapse">
-                  <thead>
-                    <tr className="text-left border-b"><th>Name</th><th>Times Ordered</th><th>Total Quantity</th></tr>
-                  </thead>
-                  <tbody>
-                    {popularReport.map((r) => (
-                      <tr key={r.id} className="border-b odd:bg-white even:bg-gray-50">
-                        <td className="py-2">{r.name}</td>
-                        <td className="py-2">{r.times_ordered}</td>
-                        <td className="py-2">{r.total_quantity}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {activeReport === 'status' && statusReport && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">Orders by Status</h4>
-                  {statusReportTime && <div className="text-sm text-gray-500">As of: {statusReportTime}</div>}
-                </div>
-                <table className="w-full text-sm mt-2 border-collapse">
-                  <thead>
-                    <tr className="text-left border-b"><th>Status</th><th>Count</th><th>Total Value</th></tr>
-                  </thead>
-                  <tbody>
-                    {statusReport.map((s, idx) => (
-                      <tr key={idx} className="border-b odd:bg-white even:bg-gray-50">
-                        <td className="py-2">{s.status}</td>
-                        <td className="py-2">{s.count}</td>
-                        <td className="py-2">${parseFloat(s.total_value || 0).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-          </CardContent>
-        </Card>
 
         <Tabs defaultValue="menu" className="w-full">
           <TabsList className="!flex !gap-4 !mb-6 !bg-transparent !h-auto !p-0 !w-fit">
@@ -947,55 +777,219 @@ export function ManagerDashboard() {
 
           {/* Reports Tab */}
           <TabsContent value="reports">
+            {reportsError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{reportsError}</AlertDescription>
+              </Alert>
+            )}
+
             {reportError && (
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>{reportError}</AlertDescription>
               </Alert>
             )}
 
+            {/* Shared Date Range Picker for Sales & Inventory Usage */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Inventory Usage Report</CardTitle>
-                <CardDescription>Generate reports on inventory usage between selected dates</CardDescription>
+                <CardTitle>Report Controls</CardTitle>
+                <CardDescription>Select dates and choose which report to generate</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleGenerateReport} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="startDate">Start Date</Label>
-                      <Input
-                        id="startDate"
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="endDate">End Date</Label>
-                      <Input
-                        id="endDate"
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        required
-                      />
-                    </div>
+                <div className="flex gap-3 mb-4 items-end">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="reportStartDate" className="text-sm">Date Range From</Label>
+                    <Input
+                      id="reportStartDate"
+                      type="date"
+                      value={salesStartDate}
+                      onChange={(e) => setSalesStartDate(e.target.value)}
+                    />
                   </div>
-                  <Button type="submit" disabled={isLoadingReport}>
-                    {isLoadingReport ? 'Generating Report...' : 'Generate Report'}
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="reportEndDate" className="text-sm">To</Label>
+                    <Input
+                      id="reportEndDate"
+                      type="date"
+                      value={salesEndDate}
+                      onChange={(e) => setSalesEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mb-4 flex-wrap">
+                  {/* Generate Sales Report */}
+                  <Button onClick={async () => {
+                    setReportsError(null);
+                    setReportsLoading(true);
+                    try {
+                      let data;
+                      if (salesStartDate && salesEndDate) {
+                        const startIso = new Date(salesStartDate + 'T00:00:00').toISOString();
+                        const endIso = new Date(salesEndDate + 'T23:59:59.999').toISOString();
+                        console.log('Sales request range:', { startIso, endIso });
+                        data = await reportsApi.getSalesSummary(startIso, endIso);
+                      } else {
+                        console.log('Sales request without range');
+                        data = await reportsApi.getSalesSummary();
+                      }
+                      console.log('Sales report payload:', data);
+                      setSalesReport(data);
+                      setActiveReport('sales');
+                      setPopularReport(null);
+                      setStatusReport(null);
+                    } catch (err: any) {
+                      console.error('Sales report error', err);
+                      setReportsError(err?.message || 'Failed to generate sales report');
+                    } finally {
+                      setReportsLoading(false);
+                    }
+                  }} disabled={reportsLoading}>
+                    Generate Sales Report
                   </Button>
-                </form>
+
+                  {/* Generate X Report (Popular Items) */}
+                  <Button onClick={async () => {
+                    setReportsError(null);
+                    setReportsLoading(true);
+                    try {
+                      const now = new Date();
+                      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+                      const startIso = startOfDay.toISOString();
+                      const endIso = endOfDay.toISOString();
+                      const data = await reportsApi.getPopularDrinks(startIso, endIso);
+                      setPopularReport(data);
+                      setActiveReport('popular');
+                      setSalesReport(null);
+                      setStatusReport(null);
+                      setPopularReportTime(new Date().toLocaleString());
+                    } catch (err: any) {
+                      console.error('Popular report error', err);
+                      setReportsError(err?.message || 'Failed to generate popular items report');
+                    } finally {
+                      setReportsLoading(false);
+                    }
+                  }} disabled={reportsLoading}>
+                    Generate X Report (Popular Today)
+                  </Button>
+
+                  {/* Generate Inventory Usage Report */}
+                  <Button onClick={async () => {
+                    setReportError(null);
+                    setIsLoadingReport(true);
+                    try {
+                      if (!salesStartDate || !salesEndDate) {
+                        setReportError('Please select both start and end dates');
+                        setIsLoadingReport(false);
+                        return;
+                      }
+                      if (new Date(salesStartDate) > new Date(salesEndDate)) {
+                        setReportError('Start date must be before end date');
+                        setIsLoadingReport(false);
+                        return;
+                      }
+                      const reportData = await inventoryApi.getUsageReport(salesStartDate, salesEndDate);
+                      setReport(reportData);
+                      setActiveReport('inventory');
+                      setSalesReport(null);
+                      setPopularReport(null);
+                      setStatusReport(null);
+                    } catch (err: any) {
+                      console.error('Error generating inventory report:', err);
+                      setReportError(err.message || 'Failed to generate inventory usage report');
+                    } finally {
+                      setIsLoadingReport(false);
+                    }
+                  }} disabled={isLoadingReport || reportsLoading}>
+                    Generate Inventory Usage Report
+                  </Button>
+                </div>
+
+                {(reportsLoading || isLoadingReport) && (
+                  <div className="text-sm text-gray-600">Generating report...</div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Report Results */}
-            {report && (
+            {/* Sales Report Display */}
+            {activeReport === 'sales' && salesReport && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Sales Summary</CardTitle>
+                  {salesReport.applied_range && (
+                    <CardDescription>
+                      Applied Range: {new Date(salesReport.applied_range.start).toLocaleString()} — {new Date(salesReport.applied_range.end).toLocaleString()}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">Total Orders</p>
+                      <p className="text-2xl font-bold">{Number(salesReport.total_orders || 0)}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">Total Revenue</p>
+                      <p className="text-2xl font-bold">${(parseFloat(salesReport.total_revenue || 0)).toFixed(2)}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">Average Order</p>
+                      <p className="text-2xl font-bold">${(parseFloat(salesReport.avg_order_value || 0)).toFixed(2)}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded">
+                      <p className="text-sm text-gray-600">Order Dates</p>
+                      <p className="text-sm">
+                        {salesReport.first_order ? new Date(salesReport.first_order).toLocaleString() : '—'}
+                        <br />
+                        {salesReport.last_order ? new Date(salesReport.last_order).toLocaleString() : '—'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Popular Items (X Report) Display */}
+            {activeReport === 'popular' && popularReport && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Popular Items Report (X Report)</CardTitle>
+                  {popularReportTime && (
+                    <CardDescription>As of: {popularReportTime}</CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="text-left border-b bg-gray-50">
+                          <th className="px-4 py-2">Item Name</th>
+                          <th className="px-4 py-2">Times Ordered</th>
+                          <th className="px-4 py-2">Total Quantity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {popularReport.map((r) => (
+                          <tr key={r.id} className="border-b odd:bg-white even:bg-gray-50">
+                            <td className="px-4 py-2">{r.name}</td>
+                            <td className="px-4 py-2">{r.times_ordered}</td>
+                            <td className="px-4 py-2">{r.total_quantity}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Inventory Usage Report Display */}
+            {activeReport === 'inventory' && report && (
               <>
-                {/* Summary Card */}
                 <Card className="mb-6">
                   <CardHeader>
-                    <CardTitle>Report Summary</CardTitle>
+                    <CardTitle>Inventory Usage Report</CardTitle>
                     <CardDescription>
                       {new Date(report.dateRange.startDate).toLocaleDateString()} - {new Date(report.dateRange.endDate).toLocaleDateString()}
                     </CardDescription>
@@ -1038,9 +1032,8 @@ export function ManagerDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* Detailed Items Table */}
                 {report.reportType === 'detailed' && report.items && report.items.length > 0 && (
-                  <Card>
+                  <Card className="mb-6">
                     <CardHeader>
                       <CardTitle>Detailed Usage Breakdown</CardTitle>
                       <CardDescription>Item-by-item inventory usage details</CardDescription>
@@ -1074,7 +1067,6 @@ export function ManagerDashboard() {
                   </Card>
                 )}
 
-                {/* Current Inventory Snapshot (for basic reports) */}
                 {report.reportType === 'basic' && report.currentInventory && (
                   <Card>
                     <CardHeader>
