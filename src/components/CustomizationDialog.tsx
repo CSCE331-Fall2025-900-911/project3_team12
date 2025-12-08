@@ -127,6 +127,7 @@ export function CustomizationDialog({
       'no-sugar': 0.5, // Still has natural sugars
       'half-sugar': 0.75,
       'normal': 1.0,
+      'extra-sugar': 1.5,
     };
     const sugarMultiplier = sugarMultipliers[customization.sugarLevel];
     const sugarCalories = sugar * 4; // 4 calories per gram of sugar
@@ -231,6 +232,12 @@ export function CustomizationDialog({
                   <RadioGroupItem value="normal" id="normal" />
                   <Label htmlFor="normal" className="flex-1 cursor-pointer">
                     Normal
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition">
+                  <RadioGroupItem value="extra-sugar" id="extra-sugar" />
+                  <Label htmlFor="extra-sugar" className="flex-1 cursor-pointer">
+                    Extra Sugar
                   </Label>
                 </div>
               </RadioGroup>

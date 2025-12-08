@@ -23,12 +23,14 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
     sugarLevel: 'normal',
     toppings: [],
     size: 'medium',
+    iceLevel: 'regular',
   });
   const [menuItems, setMenuItems] = useState<BubbleTea[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'none' | 'calories' | 'sugar' | 'protein'>('none');
   const [filterCategory, setFilterCategory] = useState<'all' | 'milk-tea' | 'fruit-tea' | 'specialty'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const { setEnabled } = useMagnifier();
 
   useEffect(() => {
@@ -70,10 +72,15 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
   };
 
   const getFilteredAndSortedMenuItems = () => {
-    // First filter by category
-    let filtered = filterCategory === 'all' 
-      ? menuItems 
-      : menuItems.filter(item => item.category === filterCategory);
+    // First filter by search query
+    let filtered = menuItems.filter(item => 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    // Then filter by category
+    if (filterCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === filterCategory);
+    }
     
     // Then sort if needed
     if (sortBy === 'none') return filtered;
@@ -108,7 +115,14 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
             <h1 className="text-3xl text-primary">Machamp Tea House</h1>
             <p className="text-muted-foreground">Select your bubble tea</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <input
+              type="text"
+              placeholder="Search drinks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-48"
+            />
             <button
               onClick={() => {
                 // call the function we exposed in index.html

@@ -11,7 +11,7 @@ export interface BubbleTea {
 }
 
 export interface Customization {
-  sugarLevel: 'no-sugar' | 'half-sugar' | 'normal';
+  sugarLevel: 'no-sugar' | 'half-sugar' | 'normal' | 'extra-sugar';
   toppings: string[];
   size: 'small' | 'medium' | 'large';
   iceLevel: 'less' | 'regular' | 'extra';
