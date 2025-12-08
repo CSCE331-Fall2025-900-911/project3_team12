@@ -202,7 +202,7 @@ export function CheckoutScreen({
                               {item.customization.size.charAt(0).toUpperCase() + item.customization.size.slice(1)}
                             </Badge>
                             <Badge variant="secondary">
-                              Sugar: {item.customization.sugarLevel === 'no-sugar' ? 'No Sugar' : item.customization.sugarLevel === 'half-sugar' ? 'Half Sugar' : 'Normal'}
+                              Sugar: {item.customization.sugarLevel === 'no-sugar' ? 'No Sugar' : item.customization.sugarLevel === 'half-sugar' ? 'Half Sugar' : item.customization.sugarLevel === 'extra-sugar' ? 'Extra Sugar' : 'Normal'}
                             </Badge>
                             <Badge variant="secondary">
                               Ice: {item.customization.iceLevel.charAt(0).toUpperCase() + item.customization.iceLevel.slice(1)}
