@@ -71,6 +71,7 @@ export function CheckoutScreen({
         quantity: item.quantity,
         size: item.customization.size,
         sugarLevel: item.customization.sugarLevel,
+        iceLevel: item.customization.iceLevel,
         toppings: item.customization.toppings,
         price: calculateItemTotal(item),
       }));
@@ -196,12 +197,15 @@ export function CheckoutScreen({
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="text-xl">{item.tea.name}</h3>
-                          <div className="flex gap-2 mt-1">
+                          <div className="flex gap-2 mt-1 flex-wrap">
                             <Badge variant="secondary">
                               {item.customization.size.charAt(0).toUpperCase() + item.customization.size.slice(1)}
                             </Badge>
                             <Badge variant="secondary">
                               Sugar: {item.customization.sugarLevel === 'no-sugar' ? 'No Sugar' : item.customization.sugarLevel === 'half-sugar' ? 'Half Sugar' : 'Normal'}
+                            </Badge>
+                            <Badge variant="secondary">
+                              Ice: {item.customization.iceLevel.charAt(0).toUpperCase() + item.customization.iceLevel.slice(1)}
                             </Badge>
                           </div>
                         </div>

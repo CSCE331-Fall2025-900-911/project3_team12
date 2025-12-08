@@ -14,6 +14,7 @@ export interface Customization {
   sugarLevel: 'no-sugar' | 'half-sugar' | 'normal';
   toppings: string[];
   size: 'small' | 'medium' | 'large';
+  iceLevel: 'less' | 'regular' | 'extra';
 }
 
 export interface CartItem {
