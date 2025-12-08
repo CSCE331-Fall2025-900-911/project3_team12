@@ -28,6 +28,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'none' | 'calories' | 'sugar' | 'protein'>('none');
+  const [filterCategory, setFilterCategory] = useState<'all' | 'milk-tea' | 'fruit-tea' | 'specialty'>('all');
   const { setEnabled } = useMagnifier();
 
   useEffect(() => {
@@ -68,10 +69,16 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
     setShowCustomization(true);
   };
 
-  const getSortedMenuItems = () => {
-    if (sortBy === 'none') return menuItems;
+  const getFilteredAndSortedMenuItems = () => {
+    // First filter by category
+    let filtered = filterCategory === 'all' 
+      ? menuItems 
+      : menuItems.filter(item => item.category === filterCategory);
     
-    return [...menuItems].sort((a, b) => {
+    // Then sort if needed
+    if (sortBy === 'none') return filtered;
+    
+    return [...filtered].sort((a, b) => {
       if (sortBy === 'calories') return a.calories - b.calories;
       if (sortBy === 'sugar') return a.sugar - b.sugar;
       if (sortBy === 'protein') return b.protein - a.protein; // Descending for protein
@@ -118,6 +125,20 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
             >
               Translate
             </button>
+            <div className="flex items-center gap-2">
+              <label htmlFor="category" className="text-sm font-medium text-gray-700">Filter:</label>
+              <select
+                id="category"
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value as typeof filterCategory)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="all">All Drinks</option>
+                <option value="milk-tea">Milk Tea</option>
+                <option value="fruit-tea">Fruit Tea</option>
+                <option value="specialty">Specialty</option>
+              </select>
+            </div>
             <div className="flex items-center gap-2">
               <label htmlFor="sort" className="text-sm font-medium text-gray-700">Sort by:</label>
               <select
@@ -169,7 +190,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart, onBack, showImages =
             className={showImages ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "gap-4"} 
             style={!showImages ? { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', width: '100%', gridAutoRows: 'minmax(min-content, max-content)' } : undefined}
           >
-            {getSortedMenuItems().map((tea) => (
+            {getFilteredAndSortedMenuItems().map((tea) => (
             <Card
               key={tea.id}
               className="overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group flex flex-col"
