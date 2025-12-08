@@ -38,6 +38,7 @@ export interface OrderItem {
   quantity: number;
   size: string;
   sugarLevel: string;
+  iceLevel: string;
   toppings: string[];
   price: number;
 }

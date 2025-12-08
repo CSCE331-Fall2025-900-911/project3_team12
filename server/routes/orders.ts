@@ -20,6 +20,7 @@ router.get('/', async (req: Request, res: Response) => {
             'quantity', oi.quantity,
             'size', oi.size,
             'sugarLevel', oi.sugar_level,
+            'iceLevel', oi.ice_level,
             'toppings', oi.toppings,
             'price', oi.price
           )
@@ -54,6 +55,7 @@ router.get('/:id', async (req: Request, res: Response) => {
             'quantity', oi.quantity,
             'size', oi.size,
             'sugarLevel', oi.sugar_level,
+            'iceLevel', oi.ice_level,
             'toppings', oi.toppings,
             'price', oi.price
           )
@@ -114,11 +116,12 @@ router.post('/', async (req: Request, res: Response) => {
           quantity,
           size,
           sugar_level,
+          ice_level,
           toppings,
           price
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING id, menu_item_id as "menuItemId", item_name as "itemName", quantity, size, sugar_level as "sugarLevel", toppings, price`,
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, menu_item_id as "menuItemId", item_name as "itemName", quantity, size, sugar_level as "sugarLevel", ice_level as "iceLevel", toppings, price`,
         [
           orderId,
           item.menuItemId,
@@ -126,6 +129,7 @@ router.post('/', async (req: Request, res: Response) => {
           item.quantity,
           item.size,
           item.sugarLevel,
+          item.iceLevel || 'regular',
           JSON.stringify(item.toppings ?? []),
           item.price
         ]

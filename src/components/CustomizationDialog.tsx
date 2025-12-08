@@ -40,6 +40,7 @@ export function CustomizationDialog({
     sugarLevel: 'normal',
     toppings: [],
     size: 'medium',
+    iceLevel: 'regular',
   });
 
   // Reset customization when a new tea is selected
@@ -48,6 +49,7 @@ export function CustomizationDialog({
       sugarLevel: 'normal',
       toppings: [],
       size: 'medium',
+      iceLevel: 'regular',
     });
   }, [tea.id]);
 
@@ -80,6 +82,7 @@ export function CustomizationDialog({
       sugarLevel: 'normal',
       toppings: [],
       size: 'medium',
+      iceLevel: 'regular',
     });
   };
 
@@ -228,6 +231,36 @@ export function CustomizationDialog({
                   <RadioGroupItem value="normal" id="normal" />
                   <Label htmlFor="normal" className="flex-1 cursor-pointer">
                     Normal
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Ice Level */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Ice Level</Label>
+              <RadioGroup
+                value={customization.iceLevel}
+                onValueChange={(value: Customization['iceLevel']) =>
+                  setCustomization((prev) => ({ ...prev, iceLevel: value }))
+                }
+              >
+                <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition">
+                  <RadioGroupItem value="less" id="less" />
+                  <Label htmlFor="less" className="flex-1 cursor-pointer">
+                    Less Ice
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition">
+                  <RadioGroupItem value="regular" id="regular" />
+                  <Label htmlFor="regular" className="flex-1 cursor-pointer">
+                    Regular Ice
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition">
+                  <RadioGroupItem value="extra" id="extra" />
+                  <Label htmlFor="extra" className="flex-1 cursor-pointer">
+                    Extra Ice
                   </Label>
                 </div>
               </RadioGroup>
