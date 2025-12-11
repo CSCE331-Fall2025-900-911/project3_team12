@@ -1,7 +1,113 @@
 import express, { Request, Response } from 'express';
 import pool, { query } from '../db';
+import { PoolClient } from 'pg';
 
 const router = express.Router();
+
+// Helper function to deduct inventory when an order is placed
+async function deductInventoryForOrder(client: PoolClient, item: any) {
+  // Define base ingredient usage per drink (in oz or ml)
+  const baseUsage: { [key: string]: number } = {
+    'Tea': 8,           // Base tea (all drinks)
+    'Milk': 4,          // Milk teas
+    'Sugar': 2,         // Base sugar
+    'Ice': 6,           // Base ice
+  };
+
+  // Size multipliers
+  const sizeMultipliers: { [key: string]: number } = {
+    'small': 0.75,
+    'medium': 1.0,
+    'large': 1.3,
+  };
+
+  // Sugar level multipliers
+  const sugarMultipliers: { [key: string]: number } = {
+    'no-sugar': 0,
+    'half-sugar': 0.5,
+    'normal': 1.0,
+    'extra-sugar': 1.5,
+  };
+
+  // Ice level multipliers
+  const iceMultipliers: { [key: string]: number } = {
+    'less': 0.5,
+    'regular': 1.0,
+    'extra': 1.5,
+  };
+
+  const sizeMultiplier = sizeMultipliers[item.size] || 1.0;
+  const sugarMultiplier = sugarMultipliers[item.sugarLevel] || 1.0;
+  const iceMultiplier = iceMultipliers[item.iceLevel] || 1.0;
+
+  // Deduct tea base
+  await client.query(
+    `UPDATE inventory 
+     SET quantity = quantity - $1, updated_at = CURRENT_TIMESTAMP 
+     WHERE ingredient_name = 'Tea' AND quantity >= $1`,
+    [baseUsage['Tea'] * sizeMultiplier * item.quantity]
+  );
+
+  // Deduct milk for milk tea drinks
+  if (item.itemName.toLowerCase().includes('milk tea')) {
+    await client.query(
+      `UPDATE inventory 
+       SET quantity = quantity - $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE ingredient_name = 'Milk' AND quantity >= $1`,
+      [baseUsage['Milk'] * sizeMultiplier * item.quantity]
+    );
+  }
+
+  // Deduct sugar
+  await client.query(
+    `UPDATE inventory 
+     SET quantity = quantity - $1, updated_at = CURRENT_TIMESTAMP 
+     WHERE ingredient_name = 'Sugar' AND quantity >= $1`,
+    [baseUsage['Sugar'] * sizeMultiplier * sugarMultiplier * item.quantity]
+  );
+
+  // Deduct ice
+  await client.query(
+    `UPDATE inventory 
+     SET quantity = quantity - $1, updated_at = CURRENT_TIMESTAMP 
+     WHERE ingredient_name = 'Ice' AND quantity >= $1`,
+    [baseUsage['Ice'] * sizeMultiplier * iceMultiplier * item.quantity]
+  );
+
+  // Deduct cups (1 per drink)
+  await client.query(
+    `UPDATE inventory 
+     SET quantity = quantity - $1, updated_at = CURRENT_TIMESTAMP 
+     WHERE ingredient_name = 'Cups' AND quantity >= $1`,
+    [item.quantity]
+  );
+
+  // Deduct straws (1 per drink)
+  await client.query(
+    `UPDATE inventory 
+     SET quantity = quantity - $1, updated_at = CURRENT_TIMESTAMP 
+     WHERE ingredient_name = 'Straws' AND quantity >= $1`,
+    [item.quantity]
+  );
+
+  // Deduct toppings
+  const toppings = item.toppings || [];
+  for (const toppingId of toppings) {
+    let ingredientName = '';
+    if (toppingId === 'boba') ingredientName = 'Boba';
+    else if (toppingId === 'lychee-jelly') ingredientName = 'Lychee Jelly';
+    else if (toppingId === 'pudding') ingredientName = 'Pudding';
+
+    if (ingredientName) {
+      await client.query(
+        `UPDATE inventory 
+         SET quantity = quantity - $1, updated_at = CURRENT_TIMESTAMP 
+         WHERE ingredient_name = $2 AND quantity >= $1`,
+        [1 * item.quantity, ingredientName]
+      );
+    }
+  }
+}
 
 // Get all orders
 router.get('/', async (req: Request, res: Response) => {
@@ -135,6 +241,9 @@ router.post('/', async (req: Request, res: Response) => {
         ]
       );
       orderItems.push(itemResult.rows[0]);
+
+      // Deduct inventory for this item
+      await deductInventoryForOrder(client, item);
     }
 
     await client.query('COMMIT');
