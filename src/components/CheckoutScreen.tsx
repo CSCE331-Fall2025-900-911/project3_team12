@@ -72,6 +72,7 @@ export function CheckoutScreen({
         size: item.customization.size,
         sugarLevel: item.customization.sugarLevel,
         iceLevel: item.customization.iceLevel,
+        temperature: item.customization.temperature,
         toppings: item.customization.toppings,
         price: calculateItemTotal(item),
       }));
@@ -206,6 +207,9 @@ export function CheckoutScreen({
                             </Badge>
                             <Badge variant="secondary">
                               Ice: {item.customization.iceLevel.charAt(0).toUpperCase() + item.customization.iceLevel.slice(1)}
+                            </Badge>
+                            <Badge variant="secondary">
+                              {item.customization.temperature.charAt(0).toUpperCase() + item.customization.temperature.slice(1)}
                             </Badge>
                           </div>
                         </div>

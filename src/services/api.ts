@@ -39,6 +39,7 @@ export interface OrderItem {
   size: string;
   sugarLevel: string;
   iceLevel: string;
+  temperature: string;
   toppings: string[];
   price: number;
 }

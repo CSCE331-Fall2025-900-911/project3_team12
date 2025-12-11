@@ -15,6 +15,7 @@ export interface Customization {
   toppings: string[];
   size: 'small' | 'medium' | 'large';
   iceLevel: 'less' | 'regular' | 'extra';
+  temperature: 'hot' | 'cold';
 }
 
 export interface CartItem {

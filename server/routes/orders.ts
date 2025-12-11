@@ -127,6 +127,7 @@ router.get('/', async (req: Request, res: Response) => {
             'size', oi.size,
             'sugarLevel', oi.sugar_level,
             'iceLevel', oi.ice_level,
+            'temperature', oi.temperature,
             'toppings', oi.toppings,
             'price', oi.price
           )
@@ -162,6 +163,7 @@ router.get('/:id', async (req: Request, res: Response) => {
             'size', oi.size,
             'sugarLevel', oi.sugar_level,
             'iceLevel', oi.ice_level,
+            'temperature', oi.temperature,
             'toppings', oi.toppings,
             'price', oi.price
           )
@@ -223,11 +225,12 @@ router.post('/', async (req: Request, res: Response) => {
           size,
           sugar_level,
           ice_level,
+          temperature,
           toppings,
           price
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, menu_item_id as "menuItemId", item_name as "itemName", quantity, size, sugar_level as "sugarLevel", ice_level as "iceLevel", toppings, price`,
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id, menu_item_id as "menuItemId", item_name as "itemName", quantity, size, sugar_level as "sugarLevel", ice_level as "iceLevel", temperature, toppings, price`,
         [
           orderId,
           item.menuItemId,
@@ -236,6 +239,7 @@ router.post('/', async (req: Request, res: Response) => {
           item.size,
           item.sugarLevel,
           item.iceLevel || 'regular',
+          item.temperature || 'cold',
           JSON.stringify(item.toppings ?? []),
           item.price
         ]

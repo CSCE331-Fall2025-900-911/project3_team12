@@ -41,6 +41,7 @@ export function CustomizationDialog({
     toppings: [],
     size: 'medium',
     iceLevel: 'regular',
+    temperature: 'cold',
   });
 
   // Reset customization when a new tea is selected
@@ -50,6 +51,7 @@ export function CustomizationDialog({
       toppings: [],
       size: 'medium',
       iceLevel: 'regular',
+      temperature: 'cold',
     });
   }, [tea.id]);
 
@@ -83,6 +85,7 @@ export function CustomizationDialog({
       toppings: [],
       size: 'medium',
       iceLevel: 'regular',
+      temperature: 'cold',
     });
   };
 
@@ -238,6 +241,30 @@ export function CustomizationDialog({
                   <RadioGroupItem value="extra-sugar" id="extra-sugar" />
                   <Label htmlFor="extra-sugar" className="flex-1 cursor-pointer">
                     Extra Sugar
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Temperature */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Temperature</Label>
+              <RadioGroup
+                value={customization.temperature}
+                onValueChange={(value: 'hot' | 'cold') =>
+                  setCustomization((prev) => ({ ...prev, temperature: value }))
+                }
+              >
+                <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition">
+                  <RadioGroupItem value="cold" id="cold" />
+                  <Label htmlFor="cold" className="flex-1 cursor-pointer">
+                    Cold
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition">
+                  <RadioGroupItem value="hot" id="hot" />
+                  <Label htmlFor="hot" className="flex-1 cursor-pointer">
+                    Hot
                   </Label>
                 </div>
               </RadioGroup>
